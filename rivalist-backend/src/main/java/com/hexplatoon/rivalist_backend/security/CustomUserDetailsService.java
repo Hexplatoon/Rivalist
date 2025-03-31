@@ -1,0 +1,58 @@
+package com.hexplatoon.rivalist_backend.security;
+
+import com.hexplatoon.rivalist_backend.entity.User;
+import com.hexplatoon.rivalist_backend.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * CustomUserDetailsService implements the Spring Security UserDetailsService interface
+ * to load user-specific data from the database during authentication.
+ * <p>
+ * This service connects Spring Security with our custom user repository and maps
+ * our User entity to Spring Security's UserDetails interface.
+ * </p>
+ */
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    /**
+     * Constructs a new CustomUserDetailsService with the required dependencies.
+     *
+     * @param userRepository repository for accessing user data
+     */
+    @Autowired
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Loads a user by username during authentication.
+     * <p>
+     * This method locates the user based on the username and returns a UserDetails object
+     * that Spring Security can use for authentication and validation.
+     * </p>
+     *
+     * @param username the username identifying the user whose data is required
+     * @return a fully populated user record (never null)
+     * @throws UsernameNotFoundException if the user could not be found or the user has no authorities
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Find the user in the database by username
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "User not found with username: " + username));
+                
+        // Our User entity already implements UserDetails, so we can return it directly
+        return user;
+    }
+}
+
