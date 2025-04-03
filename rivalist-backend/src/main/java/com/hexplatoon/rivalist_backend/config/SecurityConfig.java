@@ -4,14 +4,15 @@ import com.hexplatoon.rivalist_backend.security.CustomUserDetailsService;
 import com.hexplatoon.rivalist_backend.security.JwtAuthenticationFilter;
 import com.hexplatoon.rivalist_backend.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +37,9 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
 
+    @Value("${ALLOWED_CORS}")
+    private String allowed_cors;
+
     /**
      * Configures the security filter chain with JWT authentication, CORS, CSRF settings,
      * and endpoint authorization rules.
@@ -48,7 +52,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             // Configure CSRF - disabling for stateless JWT authentication
-            .csrf(csrf -> csrf.disable())
+            .csrf(AbstractHttpConfigurer::disable)
             // Configure CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             // Configure session management to stateless (no sessions)
@@ -78,8 +82,9 @@ public class SecurityConfig {
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:8080", "https://rivalist.com")); // Update with your frontend URLs
+        configuration.setAllowedOrigins(List.of(allowed_cors, "https://rivalist.com")); // Update with your frontend URLs
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setAllowCredentials(true);
@@ -103,26 +108,12 @@ public class SecurityConfig {
     }
     
     /**
-     * Configures the DaoAuthenticationProvider with the custom user details service
-     * and password encoder.
-     *
-     * @return The configured DaoAuthenticationProvider
-     */
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(customUserDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
-    
-    /**
      * Provides the password encoder bean for secure password handling.
      *
      * @return The BCryptPasswordEncoder instance
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(10);
     }
 }

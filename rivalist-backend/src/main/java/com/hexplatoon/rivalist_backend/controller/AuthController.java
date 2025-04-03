@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -22,7 +21,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {"http://localhost:3000", "https://rivalist.com"})
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -36,12 +34,8 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        try {
             AuthResponse response = authService.register(registerRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
     }
 
     /**
@@ -50,16 +44,10 @@ public class AuthController {
      * @param authRequest The authentication request containing credentials
      * @return ResponseEntity with the authentication token and user details
      */
-    @PostMapping("/login")
+    @PostMapping(value = "/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest authRequest) {
-        try {
             AuthResponse response = authService.login(authRequest);
             return ResponseEntity.ok(response);
-        } catch (BadCredentialsException e) {
-            throw new BadCredentialsException(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
     }
 
     /**
@@ -83,20 +71,18 @@ public class AuthController {
 
     /**
      * Endpoint to get the currently authenticated user's information.
+     * PreAuthorize is used for additional security to allow only authenticated
+     * users to access this endpoint.
      *
      * @return ResponseEntity with the user information
      */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> getCurrentUser() {
-        try {
-            User user = authService.getCurrentUser();
-            // Don't expose the password hash in the response
-            user.setPassword(null);
-            return ResponseEntity.ok(user);
-        } catch (IllegalStateException e) {
-            throw new IllegalStateException(e.getMessage());
-        }
+        User user = authService.getCurrentUser();
+        // Don't expose the password hash in the response
+        user.setPassword(null);
+        return ResponseEntity.ok(user);
     }
 
     /**

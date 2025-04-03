@@ -2,7 +2,7 @@ package com.hexplatoon.rivalist_backend.security;
 
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,19 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
  * </p>
  */
 @Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-
-    /**
-     * Constructs a new CustomUserDetailsService with the required dependencies.
-     *
-     * @param userRepository repository for accessing user data
-     */
-    @Autowired
-    public CustomUserDetailsService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     /**
      * Loads a user by username during authentication.
@@ -50,8 +41,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "User not found with username: " + username));
-                
-        // Our User entity already implements UserDetails, so we can return it directly
+
         return user;
     }
 }
