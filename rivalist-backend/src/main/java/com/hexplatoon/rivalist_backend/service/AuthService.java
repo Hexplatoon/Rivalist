@@ -3,6 +3,7 @@ package com.hexplatoon.rivalist_backend.service;
 import com.hexplatoon.rivalist_backend.dto.AuthRequest;
 import com.hexplatoon.rivalist_backend.dto.AuthResponse;
 import com.hexplatoon.rivalist_backend.dto.RegisterRequest;
+import com.hexplatoon.rivalist_backend.entity.Profile;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.exception.InvalidJwtAuthenticationException;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;
@@ -51,6 +52,19 @@ public class AuthService {
         user.setCreatedAt(LocalDateTime.now());
         user.setAccountStatus(User.AccountStatus.valueOf(STATUS_ACTIVE));
         user.setFirstLogin(true);
+
+        // Create and associate a new Profile
+        Profile profile = Profile.builder()
+                .user(user)
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .level(1)
+                .experience(0)
+                .typingRating(1200)
+                .cssDesignRating(1200)
+                .codeforcesRating(1200)
+                .build();
+        user.setProfile(profile);
 
         User savedUser = userRepository.save(user);
 

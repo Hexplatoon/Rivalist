@@ -93,6 +93,13 @@ public class User implements UserDetails {
     private Boolean firstLogin = true;
 
     /**
+     * Bidirectional relationship with the user's profile.
+     * The Profile entity owns the relationship.
+     */
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Profile profile;
+
+    /**
      * Sets default values before persisting a new user.
      */
     @PrePersist
