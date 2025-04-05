@@ -3,6 +3,7 @@ package com.hexplatoon.rivalist_backend.service;
 import com.hexplatoon.rivalist_backend.dto.AuthRequest;
 import com.hexplatoon.rivalist_backend.dto.AuthResponse;
 import com.hexplatoon.rivalist_backend.dto.RegisterRequest;
+import com.hexplatoon.rivalist_backend.entity.Profile;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.exception.InvalidJwtAuthenticationException;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;
@@ -44,13 +45,27 @@ public class AuthService {
     public AuthResponse register(@Valid RegisterRequest request) {
         validateRegistrationData(request);
 
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setCreatedAt(LocalDateTime.now());
-        user.setAccountStatus(User.AccountStatus.valueOf(STATUS_ACTIVE));
-        user.setFirstLogin(true);
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .createdAt(LocalDateTime.now())
+                .accountStatus(User.AccountStatus.valueOf(STATUS_ACTIVE))
+                .firstLogin(true)
+                .build();
+
+        // Create and associate a new Profile
+        Profile profile = Profile.builder()
+                .user(user)
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .level(1)
+                .experience(0)
+                .typingRating(1200)
+                .cssDesignRating(1200)
+                .codeforcesRating(1200)
+                .build();
+        user.setProfile(profile);
 
         User savedUser = userRepository.save(user);
 
