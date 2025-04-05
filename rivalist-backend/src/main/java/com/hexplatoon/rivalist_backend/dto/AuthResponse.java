@@ -43,11 +43,12 @@ public class AuthResponse {
      * List of roles assigned to the user
      */
     private List<String> roles;
-    
-    /**
-     * Account status (ACTIVE, SUSPENDED, etc.)
-     */
-    private String accountStatus;
+
+    // Not required for now
+//    /**
+//     * Account status (ACTIVE, SUSPENDED, etc.)
+//     */
+//    private String accountStatus;
     
     /**
      * Timestamp when the account was created
@@ -58,10 +59,11 @@ public class AuthResponse {
      * Timestamp when the token will expire
      */
     private LocalDateTime tokenExpiresAt;
-    
-    /**
-     * Indicates whether this is the user's first login
-     */
-    private boolean firstLogin;
+
+    // Not required for now
+//    /**
+//     * Indicates whether this is the user's first login
+//     */
+//    private boolean firstLogin;
 }
 

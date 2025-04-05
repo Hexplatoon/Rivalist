@@ -4,6 +4,7 @@ import com.hexplatoon.rivalist_backend.dto.ProfileDto;
 import com.hexplatoon.rivalist_backend.entity.Friend;
 import com.hexplatoon.rivalist_backend.entity.Friend.FriendshipStatus;
 import com.hexplatoon.rivalist_backend.entity.User;
+import com.hexplatoon.rivalist_backend.mapper.ProfileMapper;
 import com.hexplatoon.rivalist_backend.repository.FriendRepository;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;
 import jakarta.validation.constraints.NotBlank;
@@ -24,7 +25,10 @@ import java.util.stream.Collectors;
 @Validated
 @Transactional
 @RequiredArgsConstructor
-public class FriendService {
+public class
+
+
+FriendService {
 
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
@@ -325,21 +329,7 @@ public class FriendService {
      */
     private List<ProfileDto> convertUsersToProfileDtos(List<User> users) {
         return users.stream()
-                .map(user -> {
-                    ProfileDto profileDto = new ProfileDto();
-                    profileDto.setId(user.getId());
-                    profileDto.setUsername(user.getUsername());
-                    
-                    if (user.getProfile() != null) {
-                        profileDto.setFirstName(user.getProfile().getFirstName());
-                        profileDto.setLastName(user.getProfile().getLastName());
-                        profileDto.setBio(user.getProfile().getBio());
-                        profileDto.setProfilePicture(user.getProfile().getProfilePicture());
-                        profileDto.setLevel(user.getProfile().getLevel());
-                    }
-                    
-                    return profileDto;
-                })
+                .map(ProfileMapper::toProfileDto)
                 .collect(Collectors.toList());
     }
 }

@@ -3,7 +3,6 @@ package com.hexplatoon.rivalist_backend.service;
 import com.hexplatoon.rivalist_backend.dto.AuthRequest;
 import com.hexplatoon.rivalist_backend.dto.AuthResponse;
 import com.hexplatoon.rivalist_backend.dto.RegisterRequest;
-import com.hexplatoon.rivalist_backend.entity.Profile;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.exception.InvalidJwtAuthenticationException;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;
@@ -36,36 +35,46 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
 
-    public static final String STATUS_ACTIVE = "ACTIVE";
-    public static final String STATUS_PENDING = "PENDING";
-    public static final String STATUS_SUSPENDED = "SUSPENDED";
-    public static final String STATUS_DEACTIVATED = "DEACTIVATED";
+    // Not required for now
+//    public static final String STATUS_ACTIVE = "ACTIVE";
+//    public static final String STATUS_PENDING = "PENDING";
+//    public static final String STATUS_SUSPENDED = "SUSPENDED";
+//    public static final String STATUS_DEACTIVATED = "DEACTIVATED";
 
     @Transactional
     public AuthResponse register(@Valid RegisterRequest request) {
         validateRegistrationData(request);
 
+        // For reference
+//        User user = User.builder()
+//                .username(request.getUsername())
+//                .email(request.getEmail())
+//                .password(passwordEncoder.encode(request.getPassword()))
+//                .createdAt(LocalDateTime.now())
+//                .accountStatus(User.AccountStatus.valueOf(STATUS_ACTIVE))
+//                .firstLogin(true)
+//                .build();
+//
+//        // Create and associate a new Profile
+//        Profile profile = Profile.builder()
+//                .user(user)
+//                .firstName(request.getFirstName())
+//                .lastName(request.getLastName())
+//                .level(1)
+//                .experience(0)
+//                .typingRating(1200)
+//                .cssDesignRating(1200)
+//                .codeforcesRating(1200)
+//                .build();
+//        user.setProfile(profile);
+
         User user = User.builder()
                 .username(request.getUsername())
-                .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .createdAt(LocalDateTime.now())
-                .accountStatus(User.AccountStatus.valueOf(STATUS_ACTIVE))
-                .firstLogin(true)
-                .build();
-
-        // Create and associate a new Profile
-        Profile profile = Profile.builder()
-                .user(user)
+                .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .level(1)
-                .experience(0)
-                .typingRating(1200)
-                .cssDesignRating(1200)
-                .codeforcesRating(1200)
                 .build();
-        user.setProfile(profile);
 
         User savedUser = userRepository.save(user);
 
@@ -89,10 +98,10 @@ public class AuthService {
                 .username(savedUser.getUsername())
                 .email(savedUser.getEmail())
                 .roles(roles)
-                .accountStatus(String.valueOf(savedUser.getAccountStatus()))
+//                .accountStatus(String.valueOf(savedUser.getAccountStatus()))
                 .createdAt(savedUser.getCreatedAt())
                 .tokenExpiresAt(tokenExpiresAt)
-                .firstLogin(savedUser.getFirstLogin())
+//                .firstLogin(savedUser.getFirstLogin())
                 .build();
     }
 
@@ -130,10 +139,11 @@ public class AuthService {
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime();
 
-            boolean isFirstLogin = user.getFirstLogin();
-            if (isFirstLogin) {
-                updateFirstLoginStatus(user.getId());
-            }
+            // Not required for now
+//            boolean isFirstLogin = user.getFirstLogin();
+//            if (isFirstLogin) {
+//                updateFirstLoginStatus(user.getId());
+//            }
 
             List<String> roles = user.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
@@ -145,10 +155,10 @@ public class AuthService {
                     .username(user.getUsername())
                     .email(user.getEmail())
                     .roles(roles)
-                    .accountStatus(String.valueOf(user.getAccountStatus()))
+//                    .accountStatus(String.valueOf(user.getAccountStatus()))
                     .createdAt(user.getCreatedAt())
                     .tokenExpiresAt(tokenExpiresAt)
-                    .firstLogin(isFirstLogin)
+//                    .firstLogin(isFirstLogin)
                     .build();
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException("Invalid username/email or password");
@@ -198,38 +208,41 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
     }
 
-    @Transactional
-    public boolean updateFirstLoginStatus(Long userId) {
-        return userRepository.findById(userId)
-                .map(user -> {
-                    user.setFirstLogin(false);
-                    userRepository.save(user);
-                    return true;
-                })
-                .orElse(false);
-    }
+    // Not required for now
+//    @Transactional
+//    public boolean updateFirstLoginStatus(Long userId) {
+//        return userRepository.findById(userId)
+//                .map(user -> {
+//                    user.setFirstLogin(false);
+//                    userRepository.save(user);
+//                    return true;
+//                })
+//                .orElse(false);
+//    }
 
-    @Transactional
-    public boolean updateAccountStatus(Long userId, String status) {
-        validateAccountStatus(status);
+    // Not required for now
+//    @Transactional
+//    public boolean updateAccountStatus(Long userId, String status) {
+//        validateAccountStatus(status);
+//
+//        return userRepository.findById(userId)
+//                .map(user -> {
+//                    user.setAccountStatus(User.AccountStatus.valueOf(status));
+//                    userRepository.save(user);
+//                    return true;
+//                })
+//                .orElse(false);
+//    }
 
-        return userRepository.findById(userId)
-                .map(user -> {
-                    user.setAccountStatus(User.AccountStatus.valueOf(status));
-                    userRepository.save(user);
-                    return true;
-                })
-                .orElse(false);
-    }
-
-    private void validateAccountStatus(String status) {
-        if (!STATUS_ACTIVE.equals(status) &&
-                !STATUS_PENDING.equals(status) &&
-                !STATUS_SUSPENDED.equals(status) &&
-                !STATUS_DEACTIVATED.equals(status)) {
-            throw new IllegalArgumentException("Invalid account status: " + status);
-        }
-    }
+    // Not required for now
+//    private void validateAccountStatus(String status) {
+//        if (!STATUS_ACTIVE.equals(status) &&
+//                !STATUS_PENDING.equals(status) &&
+//                !STATUS_SUSPENDED.equals(status) &&
+//                !STATUS_DEACTIVATED.equals(status)) {
+//            throw new IllegalArgumentException("Invalid account status: " + status);
+//        }
+//    }
 
     @Transactional(readOnly = true)
     public boolean existsByUsername(String username) {
@@ -251,7 +264,7 @@ public class AuthService {
         return userRepository.findByUsername(username);
     }
 
-    public String getUsernameFromToken(String token) {
-        return jwtTokenProvider.extractUsername(token);
-    }
+//    public String getUsernameFromToken(String token) {
+//        return jwtTokenProvider.extractUsername(token);
+//    }
 }

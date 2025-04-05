@@ -76,6 +76,7 @@ public class AuthController {
      *
      * @return ResponseEntity with the user information
      */
+
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> getCurrentUser() {
@@ -113,24 +114,25 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Endpoint to update a user's first login status.
-     *
-     * @param userId The ID of the user to update
-     * @return ResponseEntity with the update result
-     */
-    @PostMapping("/first-login/{userId}")
-    @PreAuthorize("isAuthenticated() and (authentication.principal.id == #userId or hasRole('ADMIN'))")
-    public ResponseEntity<Map<String, Boolean>> updateFirstLoginStatus(@PathVariable Long userId) {
-        Map<String, Boolean> response = new HashMap<>();
-        boolean updated = authService.updateFirstLoginStatus(userId);
-        response.put("updated", updated);
-        
-        if (updated) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
-    }
+    // Not required for now
+//    /**
+//     * Endpoint to update a user's first login status.
+//     *
+//     * @param userId The ID of the user to update
+//     * @return ResponseEntity with the update result
+//     */
+//    @PostMapping("/first-login/{userId}")
+//    @PreAuthorize("isAuthenticated() and (authentication.principal.id == #userId or hasRole('ADMIN'))")
+//    public ResponseEntity<Map<String, Boolean>> updateFirstLoginStatus(@PathVariable Long userId) {
+//        Map<String, Boolean> response = new HashMap<>();
+//        boolean updated = authService.updateFirstLoginStatus(userId);
+//        response.put("updated", updated);
+//
+//        if (updated) {
+//            return ResponseEntity.ok(response);
+//        } else {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+//        }
+//    }
 }
 

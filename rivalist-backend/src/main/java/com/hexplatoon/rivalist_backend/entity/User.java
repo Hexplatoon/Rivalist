@@ -1,6 +1,5 @@
 package com.hexplatoon.rivalist_backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,16 +26,17 @@ import java.util.Collections;
 @Builder
 public class User implements UserDetails {
 
-    /**
-     * Enumeration representing the possible states of a user account.
-     */
-    public enum AccountStatus {
-        ACTIVE,       // Account is active and can be used normally
-        INACTIVE,     // Account is temporarily inactive
-        SUSPENDED,    // Account is suspended due to violations
-        PENDING,      // Account is pending activation or verification
-        DELETED       // Account is marked as deleted
-    }
+    // Not required for now
+//    /**
+//     * Enumeration representing the possible states of a user account.
+//     */
+//    public enum AccountStatus {
+//        ACTIVE,       // Account is active and can be used normally
+//        INACTIVE,     // Account is temporarily inactive
+//        SUSPENDED,    // Account is suspended due to violations
+//        PENDING,      // Account is pending activation or verification
+//        DELETED       // Account is marked as deleted
+//    }
 
     /**
      * Unique identifier for the user.
@@ -78,28 +78,54 @@ public class User implements UserDetails {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    /**
-     * Current status of the user account.
-     * Default is ACTIVE.
-     */
-    @Column(name = "account_status", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AccountStatus accountStatus = AccountStatus.ACTIVE;
+    // Not required for now
+//    /**
+//     * Current status of the user account.
+//     * Default is ACTIVE.
+//     */
+//    @Column(name = "account_status", nullable = false)
+//    @Enumerated(EnumType.STRING)
+//    private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
-    /**
-     * Flag indicating whether this is the user's first login.
-     * Used for onboarding flows and initial setup.
-     */
-    @Column(name = "first_login", nullable = false)
-    private Boolean firstLogin = true;
+    // Not required for now
+//    /**
+//     * Flag indicating whether this is the user's first login.
+//     * Used for onboarding flows and initial setup.
+//     */
+//    @Column(name = "first_login", nullable = false)
+//    private Boolean firstLogin = true;
 
-    /**
-     * Bidirectional relationship with the user's profile.
-     * The Profile entity owns the relationship.
-     */
-    @JsonIgnore
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private Profile profile;
+    @Column(length = 50)
+    private String firstName;
+
+    @Column(length = 50)
+    private String lastName;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    @Column(name = "profile_picture", length = 255)
+    private String profilePicture;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer level = 1;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer experience = 0;
+
+    @Column(name = "typing_rating", nullable = false)
+    @Builder.Default
+    private Integer typingRating = 0;
+
+    @Column(name = "css_design_rating", nullable = false)
+    @Builder.Default
+    private Integer cssDesignRating = 0;
+
+    @Column(name = "codeforces_rating", nullable = false)
+    @Builder.Default
+    private Integer codeforcesRating = 1200;
 
     /**
      * Sets default values before persisting a new user.
@@ -107,12 +133,14 @@ public class User implements UserDetails {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (accountStatus == null) {
-            accountStatus = AccountStatus.ACTIVE;
-        }
-        if (firstLogin == null) {
-            firstLogin = true;
-        }
+
+        // Not required for now
+//        if (accountStatus == null) {
+//            accountStatus = AccountStatus.ACTIVE;
+//        }
+//        if (firstLogin == null) {
+//            firstLogin = true;
+//        }
     }
 
     /**
@@ -124,40 +152,42 @@ public class User implements UserDetails {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
-    /**
-     * Indicates whether the user's account has expired.
-     * @return true if the user's account is valid (non-expired), false otherwise
-     */
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    // Not required for now
 
-    /**
-     * Indicates whether the user is locked or unlocked.
-     * @return true if the user is not locked, false otherwise
-     */
-    @Override
-    public boolean isAccountNonLocked() {
-        return accountStatus != AccountStatus.SUSPENDED && accountStatus != AccountStatus.DELETED;
-    }
-
-    /**
-     * Indicates whether the user's credentials (password) has expired.
-     * @return true if the user's credentials are valid (non-expired), false otherwise
-     */
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    /**
-     * Indicates whether the user is enabled or disabled.
-     * @return true if the user is enabled, false otherwise
-     */
-    @Override
-    public boolean isEnabled() {
-        return accountStatus == AccountStatus.ACTIVE || accountStatus == AccountStatus.PENDING;
-    }
+//    /**
+//     * Indicates whether the user's account has expired.
+//     * @return true if the user's account is valid (non-expired), false otherwise
+//     */
+//    @Override
+//    public boolean isAccountNonExpired() {
+//        return true;
+//    }
+//
+//    /**
+//     * Indicates whether the user is locked or unlocked.
+//     * @return true if the user is not locked, false otherwise
+//     */
+//    @Override
+//    public boolean isAccountNonLocked() {
+//        return accountStatus != AccountStatus.SUSPENDED && accountStatus != AccountStatus.DELETED;
+//    }
+//
+//    /**
+//     * Indicates whether the user's credentials (password) has expired.
+//     * @return true if the user's credentials are valid (non-expired), false otherwise
+//     */
+//    @Override
+//    public boolean isCredentialsNonExpired() {
+//        return true;
+//    }
+//
+//    /**
+//     * Indicates whether the user is enabled or disabled.
+//     * @return true if the user is enabled, false otherwise
+//     */
+//    @Override
+//    public boolean isEnabled() {
+//        return accountStatus == AccountStatus.ACTIVE || accountStatus == AccountStatus.PENDING;
+//    }
 }
 
