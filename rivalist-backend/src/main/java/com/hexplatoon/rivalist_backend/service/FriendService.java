@@ -7,7 +7,7 @@ import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.repository.FriendRepository;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,16 +23,12 @@ import java.util.stream.Collectors;
 @Service
 @Validated
 @Transactional
+@RequiredArgsConstructor
 public class FriendService {
 
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
-
-    @Autowired
-    public FriendService(FriendRepository friendRepository, UserRepository userRepository) {
-        this.friendRepository = friendRepository;
-        this.userRepository = userRepository;
-    }
+    private final NotificationService notificationService;
 
     /**
      * Sends a friend request from one user to another.
@@ -78,6 +74,13 @@ public class FriendService {
                 .build();
 
         friendRepository.save(friendRequest);
+        // Send notification to target user
+        notificationService.createNotification(
+            targetUsername,
+            currentUsername,
+            "friend_request",
+            currentUsername + " sent you a friend request"
+        );
     }
 
     /**
@@ -115,6 +118,14 @@ public class FriendService {
             friendRepository.save(reciprocalFriendship);
         }
 
+        // Send notification to the sender
+        notificationService.createNotification(
+            senderUsername,
+            currentUsername,
+            "friend_request_accepted",
+            currentUsername + " accepted your friend request"
+        );
+
         return "Friend request accepted";
     }
 
@@ -135,6 +146,14 @@ public class FriendService {
         if (pendingRequest.getStatus() != FriendshipStatus.PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Friend request is not in pending status");
         }
+
+        // Send notification to the sender
+        notificationService.createNotification(
+            senderUsername,
+            currentUsername,
+            "friend_request_declined",
+            currentUsername + " declined your friend request"
+        );
 
         friendRepository.delete(pendingRequest);
         return "Friend request declined";

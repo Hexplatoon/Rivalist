@@ -1,5 +1,6 @@
 package com.hexplatoon.rivalist_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -96,6 +97,7 @@ public class User implements UserDetails {
      * Bidirectional relationship with the user's profile.
      * The Profile entity owns the relationship.
      */
+    @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Profile profile;
 

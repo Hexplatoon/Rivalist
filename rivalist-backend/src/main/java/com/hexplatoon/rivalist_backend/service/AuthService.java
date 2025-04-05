@@ -45,13 +45,14 @@ public class AuthService {
     public AuthResponse register(@Valid RegisterRequest request) {
         validateRegistrationData(request);
 
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setCreatedAt(LocalDateTime.now());
-        user.setAccountStatus(User.AccountStatus.valueOf(STATUS_ACTIVE));
-        user.setFirstLogin(true);
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .createdAt(LocalDateTime.now())
+                .accountStatus(User.AccountStatus.valueOf(STATUS_ACTIVE))
+                .firstLogin(true)
+                .build();
 
         // Create and associate a new Profile
         Profile profile = Profile.builder()
