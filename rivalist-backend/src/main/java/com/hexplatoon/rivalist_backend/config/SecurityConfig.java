@@ -60,7 +60,7 @@ public class SecurityConfig {
             // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints that don't require authentication
-                .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/public/**", "/ws/**", "/testing/**").permitAll()
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             );

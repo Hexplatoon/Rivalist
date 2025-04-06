@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Notifications</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans flex flex-col items-center p-8 min-h-screen">
+<h1 class="text-4xl font-bold mb-8 text-blue-400">🔔 Live Notifications</h1>
+
+<div class="w-full max-w-xl space-y-4">
+  <input id="jwtInput" type="text" placeholder="Paste JWT token"
+         class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+  <button id="connectBtn"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition">
+    Connect to Notifications
+  </button>
+
+  <div id="status" class="text-sm text-gray-400">🔌 Not connected</div>
+
+  <div id="notifications"
+       class="bg-gray-800 rounded p-4 shadow-inner space-y-2 h-96 overflow-y-auto border border-gray-700">
+    <p class="text-gray-500 text-sm">No notifications yet.</p>
+  </div>
+</div>
+
+<script>
+  let stompClient = null;
+
+  function connectToWebSocket(jwt) {
+    const socket = new SockJS("/ws");
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({ Authorization: `Bearer ${jwt}` }, () => {
+      document.getElementById("status").innerText = "✅ Connected to WebSocket";
+      const notificationBox = document.getElementById("notifications");
+      notificationBox.innerHTML = '';
+
+      stompClient.subscribe("/user/queue/notifications", (msg) => {
+        const data = JSON.parse(msg.body);
+        const text = data.message || msg.body;
+
+        const p = document.createElement("div");
+        p.className = "bg-blue-600 text-white px-4 py-2 rounded-lg shadow transition transform hover:scale-[1.02]";
+        p.innerHTML = `<span class="text-xs text-blue-200">${new Date().toLocaleTimeString()}</span><br>${text}`;
+
+        notificationBox.appendChild(p);
+        notificationBox.scrollTop = notificationBox.scrollHeight;
+      });
+    }, (err) => {
+      document.getElementById("status").innerText = `❌ Connection failed: ${err}`;
+    });
+  }
+
+  document.getElementById("connectBtn").addEventListener("click", () => {
+    const jwt = document.getElementById("jwtInput").value.trim();
+    if (!jwt) return alert("Please enter a JWT token.");
+    connectToWebSocket(jwt);
+  });
+</script>
+</body>
+</html>

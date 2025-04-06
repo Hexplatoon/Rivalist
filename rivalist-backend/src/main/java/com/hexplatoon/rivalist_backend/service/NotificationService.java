@@ -5,7 +5,6 @@ import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.repository.NotificationRepository;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
