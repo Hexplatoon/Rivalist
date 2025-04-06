@@ -1,3 +1,108 @@
+# Challenge Request System - Implementation Status
+
+This document outlines the implementation status of the Challenge Request System for the Rivalist application.
+
+## Completed Backend Components
+
+### Database Layer
+- ✅ Database migration (V4__challenge_requests.sql) with:
+  - Table creation with proper constraints
+  - Indexes for efficient querying
+  - Automatic expiration trigger (60-second timeout)
+  - ON DELETE CASCADE for referential integrity
+
+### Entity & Repository Layer
+- ✅ ChallengeRequest.java entity
+- ✅ ChallengeRequestRepository.java with custom queries for:
+  - Finding pending challenges by user
+  - Finding sent challenges by user
+  - Finding expired challenges
+
+### Service Layer
+- ✅ ChallengeRequestService.java with business logic:
+  - Creating challenges
+  - Accepting challenges
+  - Declining challenges
+  - Cancelling challenges
+  - Handling expired challenges
+  - WebSocket integration for real-time updates
+
+### Controller Layer
+- ✅ ChallengeRequestController.java with:
+  - REST endpoints (create, accept, decline, cancel)
+  - WebSocket message handlers
+  - Swagger documentation
+  - Proper error handling and logging (SLF4J)
+
+### Testing
+- ✅ Repository tests
+- ✅ Service tests
+- ✅ Controller tests (REST + WebSocket)
+
+## Frontend Integration (Next Steps)
+
+### New React Components
+1. **ChallengeNotification**
+   ```typescript
+   interface ChallengeNotificationProps {
+       challenge: ChallengeRequest;
+       onAccept: () => void;
+       onDecline: () => void;
+   }
+   ```
+   - Displays a notification when a friend sends a challenge
+   - Shows timer for expiration
+   - Accept/Decline buttons
+
+2. **ChallengeTimer**
+   ```typescript
+   interface ChallengeTimerProps {
+       expiresAt: string;
+       onExpire: () => void;
+   }
+   ```
+   - Countdown timer for challenge expiration
+   - Visual indication of time remaining
+   - Calls onExpire when time is up
+
+3. **ChallengeList**
+   ```typescript
+   interface ChallengeListProps {
+       type: 'sent' | 'received';
+       onCancel?: (challengeId: number) => void;
+   }
+   ```
+   - Displays list of sent or received challenges
+   - Status indicators (pending, accepted, declined, expired)
+   - Cancel button for sent challenges
+
+### Update Existing Components
+
+1. **WaitingForFriend.tsx**
+   - Add WebSocket subscription for real-time updates
+   - Handle incoming challenge notifications
+   - Display challenge status updates
+
+2. **BattleTypeSelection.tsx**
+   - Add friend selection UI
+   - Implement challenge creation functionality
+   - Handle challenge responses
+
+## Integration Requirements
+
+1. WebSocket connection for real-time updates
+2. API client methods for challenge operations
+3. State management for tracking challenges
+4. Notification system for displaying challenge events
+5. Timer synchronization with server expiration time
+
+## Timeline
+
+1. Backend Implementation: ✅ Completed
+2. Frontend Components: In Progress
+3. Integration Testing: Pending
+4. Deployment: Pending
+
 # Challenge Friend to Battle System
 
 ## Overview
