@@ -1,8 +1,0 @@
-{
-  "email": "receiver@example.com",
-  "username": "receiver",
-  "password": "TestPassword123!",
-  "passwordConfirmation": "TestPassword123!",
-  "firstName": "Test",
-  "lastName": "Receiver"
-}
