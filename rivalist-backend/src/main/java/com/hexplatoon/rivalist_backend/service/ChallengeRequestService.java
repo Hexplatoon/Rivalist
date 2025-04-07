@@ -1,9 +1,9 @@
 package com.hexplatoon.rivalist_backend.service;
 
 import com.hexplatoon.rivalist_backend.dto.ChallengeRequestDto;
-import com.hexplatoon.rivalist_backend.entity.Battle;
 import com.hexplatoon.rivalist_backend.entity.ChallengeRequest;
 import com.hexplatoon.rivalist_backend.entity.ChallengeRequest.ChallengeStatus;
+import com.hexplatoon.rivalist_backend.entity.Friend;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.repository.ChallengeRequestRepository;
 import com.hexplatoon.rivalist_backend.repository.FriendRepository;
@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -28,22 +29,22 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChallengeRequestService {
 
+    // TODO : Use friend service in place of friend repository
     private final ChallengeRequestRepository challengeRequestRepository;
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
-    private final WebSocketService webSocketService;
-    private final BattleService battleService;
+    private final NotificationService notificationService;
+    private final FriendService friendService;
 
     /**
      * Create a new challenge request from one user to another
-     * @param senderUsername Username of the sender
      * @param recipientUsername Username of the recipient
      * @param eventType Type of event (e.g., "typing", "css", "codeforces")
      * @return The created challenge request as DTO
      */
     @Transactional
-    public ChallengeRequestDto createChallenge(@NotBlank String senderUsername, 
-                                               @NotBlank String recipientUsername, 
+    public ChallengeRequestDto createChallenge(@NotBlank String senderUsername,
+                                               @NotBlank String recipientUsername,
                                                @NotBlank String eventType) {
         if (senderUsername.equals(recipientUsername)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot challenge yourself");
@@ -56,6 +57,7 @@ public class ChallengeRequestService {
         validateFriendship(sender, recipient);
 
         // Check if there's already a pending challenge
+        // TODO : change the check in pendingchallengebwtusers for type
         Optional<ChallengeRequest> existingChallenge = 
             challengeRequestRepository.findPendingChallengeBetweenUsers(sender, recipient);
         
@@ -78,46 +80,52 @@ public class ChallengeRequestService {
         ChallengeRequest savedChallenge = challengeRequestRepository.save(challenge);
         
         // Notify recipient about the challenge
-        notifyChallengeSent(savedChallenge);
+        notificationService.createNotification(
+                recipientUsername,
+                senderUsername,
+                "challenge_sent",
+                senderUsername + "have sent you a " + eventType + " challenge"
+        );
         
         return convertToDto(savedChallenge);
     }
 
-    /**
-     * Accept a challenge and create a battle
-     * @param recipientUsername Username of the recipient accepting the challenge
-     * @param challengeId ID of the challenge to accept
-     * @return The challenge request as DTO with updated status
-     */
-    @Transactional
-    public ChallengeRequestDto acceptChallenge(@NotBlank String recipientUsername, Long challengeId) {
-        User recipient = findUserByUsername(recipientUsername);
-        
-        ChallengeRequest challenge = challengeRequestRepository.findById(challengeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
-        
-        // Validate challenge status and recipient
-        validateChallengeStatus(challenge, recipient, ChallengeStatus.PENDING);
-        
-        // Update challenge status
-        challenge.setStatus(ChallengeStatus.ACCEPTED);
-        
-        // Create a battle for the challenge
-        Battle battle = battleService.createBattle(
-                challenge.getEventType(),
-                challenge.getSender().getId(),
-                challenge.getRecipient().getId()
-        );
-        
-        // Link battle to challenge
-        challenge.setBattle(battle);
-        ChallengeRequest updatedChallenge = challengeRequestRepository.save(challenge);
-        
-        // Notify users about acceptance
-        notifyChallengeAccepted(updatedChallenge);
-        
-        return convertToDto(updatedChallenge);
-    }
+    // Not working for now
+//    /**
+//     * Accept a challenge and create a battle
+//     * @param recipientUsername Username of the recipient accepting the challenge
+//     * @param challengeId ID of the challenge to accept
+//     * @return The challenge request as DTO with updated status
+//     */
+//    @Transactional
+//    public ChallengeRequestDto acceptChallenge(@NotBlank String recipientUsername, Long challengeId) {
+//        User recipient = findUserByUsername(recipientUsername);
+//
+//        ChallengeRequest challenge = challengeRequestRepository.findById(challengeId)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
+//
+//        // Validate challenge status and recipient
+//        validateChallengeStatus(challenge, recipient, ChallengeStatus.PENDING);
+//
+//        // Update challenge status
+//        challenge.setStatus(ChallengeStatus.ACCEPTED);
+//
+//        // Create a battle for the challenge
+//        Battle battle = battleService.createBattle(
+//                challenge.getEventType(),
+//                challenge.getSender().getId(),
+//                challenge.getRecipient().getId()
+//        );
+//
+//        // Link battle to challenge
+//        challenge.setBattle(battle);
+//        ChallengeRequest updatedChallenge = challengeRequestRepository.save(challenge);
+//
+//        // Notify users about acceptance
+//        notifyChallengeAccepted(updatedChallenge);
+//
+//        return convertToDto(updatedChallenge);
+//    }
 
     /**
      * Decline a challenge
@@ -140,42 +148,47 @@ public class ChallengeRequestService {
         ChallengeRequest updatedChallenge = challengeRequestRepository.save(challenge);
         
         // Notify users about decline
-        notifyChallengeDeclined(updatedChallenge);
+        String senderUsername = updatedChallenge.getSender().getUsername();
+        System.out.println("Sender: " + senderUsername + " Reciept: " + recipientUsername);
+        notificationService.createNotification(
+                senderUsername,
+                recipientUsername,
+                "challenge_declined",
+                recipientUsername + " have declined the challenge."
+        );
         
         return convertToDto(updatedChallenge);
     }
 
-    /**
-     * Cancel a pending challenge
-     * @param senderUsername Username of the sender cancelling the challenge
-     * @param challengeId ID of the challenge to cancel
-     * @return The challenge request as DTO with updated status
-     */
-    @Transactional
-    public ChallengeRequestDto cancelChallenge(@NotBlank String senderUsername, Long challengeId) {
-        User sender = findUserByUsername(senderUsername);
-        
-        ChallengeRequest challenge = challengeRequestRepository.findById(challengeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
-        
-        // Validate challenge owner and status
-        if (!challenge.getSender().equals(sender)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only cancel your own challenges");
-        }
-        
-        if (challenge.getStatus() != ChallengeStatus.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending challenges can be cancelled");
-        }
-        
-        // Update challenge status
-        challenge.setStatus(ChallengeStatus.CANCELLED);
-        ChallengeRequest updatedChallenge = challengeRequestRepository.save(challenge);
-        
-        // Notify users about cancellation
-        notifyChallengeCancelled(updatedChallenge);
-        
-        return convertToDto(updatedChallenge);
-    }
+    //Not required for now
+//    /**
+//     * Cancel a pending challenge
+//     * @param senderUsername Username of the sender cancelling the challenge
+//     * @param challengeId ID of the challenge to cancel
+//     * @return The challenge request as DTO with updated status
+//     */
+//    @Transactional
+//    public ChallengeRequestDto cancelChallenge(@NotBlank String senderUsername, Long challengeId) {
+//        User sender = findUserByUsername(senderUsername);
+//
+//        ChallengeRequest challenge = challengeRequestRepository.findById(challengeId)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
+//
+//        // Validate challenge owner and status
+//        if (!challenge.getSender().equals(sender)) {
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only cancel your own challenges");
+//        }
+//
+//        if (challenge.getStatus() != ChallengeStatus.PENDING) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending challenges can be cancelled");
+//        }
+//
+//        // Update challenge status
+//        challenge.setStatus(ChallengeStatus.CANCELLED);
+//        ChallengeRequest updatedChallenge = challengeRequestRepository.save(challenge);
+//
+//        return convertToDto(updatedChallenge);
+//    }
 
     /**
      * Get all pending challenges received by a user
@@ -230,7 +243,6 @@ public class ChallengeRequestService {
         for (ChallengeRequest challenge : expiredChallenges) {
             challenge.setStatus(ChallengeStatus.EXPIRED);
             challengeRequestRepository.save(challenge);
-            notifyChallengeExpired(challenge);
         }
     }
 
@@ -238,7 +250,8 @@ public class ChallengeRequestService {
      * Validate that two users are friends
      */
     private void validateFriendship(User user1, User user2) {
-        boolean areFriends = friendRepository.existsFriendshipBetweenUsers(user1, user2);
+        boolean areFriends =
+                friendService.getFriendStatus(user1.getUsername(), user2.getUsername()) == Friend.FriendshipStatus.ACCEPTED;
         if (!areFriends) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only challenge friends");
         }
@@ -261,11 +274,11 @@ public class ChallengeRequestService {
             // Auto-expire the challenge if it's past the expiration time
             challenge.setStatus(ChallengeStatus.EXPIRED);
             challengeRequestRepository.save(challenge);
-            notifyChallengeExpired(challenge);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Challenge has expired");
         }
     }
 
+    // TODO : Move this to Global Mapper
     /**
      * Convert challenge entity to DTO
      */
@@ -279,7 +292,7 @@ public class ChallengeRequestService {
                 .id(challenge.getId())
                 .senderUsername(challenge.getSender().getUsername())
                 .recipientUsername(challenge.getRecipient().getUsername())
-                .battleId(challenge.getBattle() != null ? challenge.getBattle().getId() : null)
+//                .battleId(challenge.getBattle() != null ? challenge.getBattle().getId() : null)
                 .status(challenge.getStatus())
                 .eventType(challenge.getEventType())
                 .createdAt(challenge.getCreatedAt())
@@ -294,39 +307,6 @@ public class ChallengeRequestService {
     private User findUserByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + username));
-    }
-
-    /**
-     * WebSocket notification methods
-     */
-    private void notifyChallengeSent(ChallengeRequest challenge) {
-        ChallengeRequestDto dto = convertToDto(challenge);
-        webSocketService.sendToUser(challenge.getRecipient().getUsername(), "CHALLENGE_RECEIVED", dto);
-        webSocketService.sendToUser(challenge.getSender().getUsername(), "CHALLENGE_SENT", dto);
-    }
-
-    private void notifyChallengeAccepted(ChallengeRequest challenge) {
-        ChallengeRequestDto dto = convertToDto(challenge);
-        webSocketService.sendToUser(challenge.getSender().getUsername(), "CHALLENGE_ACCEPTED", dto);
-        webSocketService.sendToUser(challenge.getRecipient().getUsername(), "CHALLENGE_ACCEPTED", dto);
-    }
-
-    private void notifyChallengeDeclined(ChallengeRequest challenge) {
-        ChallengeRequestDto dto = convertToDto(challenge);
-        webSocketService.sendToUser(challenge.getSender().getUsername(), "CHALLENGE_DECLINED", dto);
-        webSocketService.sendToUser(challenge.getRecipient().getUsername(), "CHALLENGE_DECLINED", dto);
-    }
-
-    private void notifyChallengeExpired(ChallengeRequest challenge) {
-        ChallengeRequestDto dto = convertToDto(challenge);
-        webSocketService.sendToUser(challenge.getSender().getUsername(), "CHALLENGE_EXPIRED", dto);
-        webSocketService.sendToUser(challenge.getRecipient().getUsername(), "CHALLENGE_EXPIRED", dto);
-    }
-
-    private void notifyChallengeCancelled(ChallengeRequest challenge) {
-        ChallengeRequestDto dto = convertToDto(challenge);
-        webSocketService.sendToUser(challenge.getSender().getUsername(), "CHALLENGE_CANCELLED", dto);
-        webSocketService.sendToUser(challenge.getRecipient().getUsername(), "CHALLENGE_CANCELLED", dto);
     }
 }
 

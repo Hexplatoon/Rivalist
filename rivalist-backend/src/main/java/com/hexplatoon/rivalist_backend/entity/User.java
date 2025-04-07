@@ -25,7 +25,7 @@ import java.util.Collections;
 @AllArgsConstructor
 @Builder
 public class User implements UserDetails {
-
+    // TODO : Add enum to denote user status : online, offline, in-battle
     // Not required for now
 //    /**
 //     * Enumeration representing the possible states of a user account.

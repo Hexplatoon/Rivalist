@@ -187,26 +187,26 @@ public class AuthService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() ||
-                authentication.getPrincipal().equals("anonymousUser")) {
-            throw new IllegalStateException("No authenticated user found");
-        }
-
-        String username;
-        if (authentication.getPrincipal() instanceof User) {
-            return (User) authentication.getPrincipal();
-        } else if (authentication.getPrincipal() instanceof String) {
-            username = (String) authentication.getPrincipal();
-        } else {
-            username = authentication.getName();
-        }
-
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
-    }
+//    @Transactional(readOnly = true)
+//    public User getCurrentUser() {
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        if (authentication == null || !authentication.isAuthenticated() ||
+//                authentication.getPrincipal().equals("anonymousUser")) {
+//            throw new IllegalStateException("No authenticated user found");
+//        }
+//
+//        String username;
+//        if (authentication.getPrincipal() instanceof User) {
+//            return (User) authentication.getPrincipal();
+//        } else if (authentication.getPrincipal() instanceof String) {
+//            username = (String) authentication.getPrincipal();
+//        } else {
+//            username = authentication.getName();
+//        }
+//
+//        return userRepository.findByUsername(username)
+//                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
+//    }
 
     // Not required for now
 //    @Transactional

@@ -80,22 +80,22 @@ FriendService {
         friendRepository.save(friendRequest);
         // Send notification to target user
         notificationService.createNotification(
-            targetUsername,
-            currentUsername,
-            "friend_request",
-            currentUsername + " sent you a friend request"
+                targetUsername,
+                currentUsername,
+                "friend_request",
+                currentUsername + " sent you a friend request"
         );
     }
 
     /**
      * Accepts a pending friend request.
      *
-     * @param currentUsername The username of the user accepting the request
+     * @param recipientUsername The username of the user accepting the request
      * @param senderUsername  The username of the user who sent the request
      * @return A message indicating the result of the operation
      */
-    public String acceptFriendRequest(@NotBlank String currentUsername, @NotBlank String senderUsername) {
-        User currentUser = findUserByUsername(currentUsername);
+    public String acceptFriendRequest(@NotBlank String recipientUsername, @NotBlank String senderUsername) {
+        User currentUser = findUserByUsername(recipientUsername);
         User sender = findUserByUsername(senderUsername);
 
         // Find the pending request
@@ -124,10 +124,10 @@ FriendService {
 
         // Send notification to the sender
         notificationService.createNotification(
-            senderUsername,
-            currentUsername,
-            "friend_request_accepted",
-            currentUsername + " accepted your friend request"
+                senderUsername,
+                recipientUsername,
+                "friend_request_accepted",
+                recipientUsername + " accepted your friend request"
         );
 
         return "Friend request accepted";
@@ -140,6 +140,7 @@ FriendService {
      * @param senderUsername  The username of the user who sent the request
      * @return A message indicating the result of the operation
      */
+    // TODO : change return type to void
     public String declineFriendRequest(@NotBlank String currentUsername, @NotBlank String senderUsername) {
         User currentUser = findUserByUsername(currentUsername);
         User sender = findUserByUsername(senderUsername);
@@ -220,7 +221,7 @@ FriendService {
      * @param otherUsername   The username of the other user
      * @return The status of the friendship
      */
-    public String getFriendStatus(@NotBlank String currentUsername, @NotBlank String otherUsername) {
+    public String getFriendStatusAsText(@NotBlank String currentUsername, @NotBlank String otherUsername) {
         User currentUser = findUserByUsername(currentUsername);
         User otherUser = findUserByUsername(otherUsername);
 
@@ -251,6 +252,19 @@ FriendService {
         }
 
         return "NOT_FRIENDS";
+    }
+
+    public FriendshipStatus getFriendStatus(@NotBlank String currentUsername, @NotBlank String otherUsername) {
+        User currentUser = findUserByUsername(currentUsername);
+        User otherUser = findUserByUsername(otherUsername);
+        List<Friend> friendships = friendRepository.findFriendRequestBetweenUsers(currentUser, otherUser);
+        Optional<Friend> friendship = friendships.isEmpty() ? Optional.empty() : Optional.of(friendships.get(0));
+
+        if (friendship.isEmpty()) {
+            return FriendshipStatus.UNRELATED;
+        }
+
+        return friendship.get().getStatus();
     }
 
     /**

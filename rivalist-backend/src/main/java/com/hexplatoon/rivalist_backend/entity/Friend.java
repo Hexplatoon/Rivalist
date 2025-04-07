@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Friend {
 
+    // TODO : add friend request declined status
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -44,7 +45,8 @@ public class Friend {
     public enum FriendshipStatus {
         PENDING,
         ACCEPTED,
-        BLOCKED
+        BLOCKED,
+        UNRELATED
     }
 }
 

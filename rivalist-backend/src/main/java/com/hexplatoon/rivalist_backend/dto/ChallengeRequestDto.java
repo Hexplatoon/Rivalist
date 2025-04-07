@@ -16,7 +16,7 @@ public class ChallengeRequestDto {
     private Long id;
     private String senderUsername;
     private String recipientUsername;
-    private Long battleId;
+//    private Long battleId;
     private ChallengeStatus status;
     private String eventType;
     private LocalDateTime createdAt;

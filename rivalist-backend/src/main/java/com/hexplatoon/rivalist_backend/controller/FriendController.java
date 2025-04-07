@@ -123,7 +123,7 @@ public class FriendController {
             Authentication authentication) {
         try {
             String username = authentication.getName();
-            String status = friendService.getFriendStatus(username, otherUsername);
+            String status = friendService.getFriendStatusAsText(username, otherUsername);
             return ResponseEntity.ok(new FriendStatusDto(status, username, otherUsername));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());

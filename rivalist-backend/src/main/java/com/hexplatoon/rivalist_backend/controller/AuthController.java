@@ -5,6 +5,7 @@ import com.hexplatoon.rivalist_backend.dto.AuthResponse;
 import com.hexplatoon.rivalist_backend.dto.RegisterRequest;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.service.AuthService;
+import com.hexplatoon.rivalist_backend.service.CurrentUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final CurrentUserService currentUserService;
 
     /**
      * Endpoint to register a new user.
@@ -80,7 +82,7 @@ public class AuthController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> getCurrentUser() {
-        User user = authService.getCurrentUser();
+        User user = currentUserService.getCurrentUserDetails();
         // Don't expose the password hash in the response
         user.setPassword(null);
         return ResponseEntity.ok(user);

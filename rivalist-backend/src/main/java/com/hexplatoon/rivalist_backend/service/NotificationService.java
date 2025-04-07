@@ -1,5 +1,6 @@
 package com.hexplatoon.rivalist_backend.service;
 
+import com.hexplatoon.rivalist_backend.dto.NotificationDto;
 import com.hexplatoon.rivalist_backend.entity.Notification;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.repository.NotificationRepository;
@@ -19,8 +20,8 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public void createNotification(String username, String senderUsername, String type, String message) {
-        User user = userRepository.findByUsername(username)
+    public void createNotification(String recipientUsername, String senderUsername, String type, String message) {
+        User user = userRepository.findByUsername(recipientUsername)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         User sender = userRepository.findByUsername(senderUsername)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
@@ -31,14 +32,15 @@ public class NotificationService {
         notification.setType(type);
         notification.setMessage(message);
         notification.setRead(false);
-
-        notificationRepository.save(notification);
-
+        System.out.println(notification.getSender().getUsername());
+        System.out.println(notification.getUser().getUsername());
+        Notification savedNotification = notificationRepository.save(notification);
+        NotificationDto dto = NotificationDto.fromEntity(savedNotification);
         // Send real-time notification via WebSocket
         messagingTemplate.convertAndSendToUser(
-            username,
+                recipientUsername,
             "/queue/notifications",
-            notification
+            dto
         );
     }
 

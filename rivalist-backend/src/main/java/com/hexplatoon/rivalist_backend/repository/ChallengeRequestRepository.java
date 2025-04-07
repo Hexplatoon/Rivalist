@@ -57,11 +57,12 @@ public interface ChallengeRequestRepository extends JpaRepository<ChallengeReque
      */
     Optional<ChallengeRequest> findBySenderAndRecipientAndStatus(User sender, User recipient, ChallengeStatus status);
 
-    /**
-     * Update battle ID for a challenge
-     */
-    @Modifying
-    @Query("UPDATE ChallengeRequest c SET c.battle.id = :battleId WHERE c.id = :id")
-    void updateBattleId(@Param("id") Long id, @Param("battleId") Long battleId);
+    // Not Required for now
+//    /**
+//     * Update battle ID for a challenge
+//     */
+//    @Modifying
+//    @Query("UPDATE ChallengeRequest c SET c.battle.id = :battleId WHERE c.id = :id")
+//    void updateBattleId(@Param("id") Long id, @Param("battleId") Long battleId);
 }
 

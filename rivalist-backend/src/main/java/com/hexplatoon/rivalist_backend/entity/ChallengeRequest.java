@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ChallengeRequest {
 
+    // TODO : Rename the dto and the entity to Challenge
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,9 +35,10 @@ public class ChallengeRequest {
     @JoinColumn(name = "recipient_id", nullable = false)
     private User recipient;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "battle_id")
-    private Battle battle;
+    // Not Required for now
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "battle_id")
+//    private Battle battle;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
