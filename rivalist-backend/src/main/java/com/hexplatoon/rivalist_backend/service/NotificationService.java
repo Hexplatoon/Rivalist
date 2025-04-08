@@ -26,14 +26,14 @@ public class NotificationService {
         User sender = userRepository.findByUsername(senderUsername)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
 
-        Notification notification = new Notification();
-        notification.setUser(user);
-        notification.setSender(sender);
-        notification.setType(type);
-        notification.setMessage(message);
-        notification.setRead(false);
-        System.out.println(notification.getSender().getUsername());
-        System.out.println(notification.getUser().getUsername());
+        Notification notification = Notification.builder()
+                .user(user)
+                .sender(sender)
+                .type(type)
+                .message(message)
+                .isRead(false)
+                .build();
+
         Notification savedNotification = notificationRepository.save(notification);
         NotificationDto dto = NotificationDto.fromEntity(savedNotification);
         // Send real-time notification via WebSocket
