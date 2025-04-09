@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.util.Base64;
 
 @Service
-public class ImageServices {
+public class ScreenshotServices {
 
     public void captureScreenshot(String htmlContent) throws Exception {
 

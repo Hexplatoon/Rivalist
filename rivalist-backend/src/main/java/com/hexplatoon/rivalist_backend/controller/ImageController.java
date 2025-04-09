@@ -2,26 +2,29 @@ package com.hexplatoon.rivalist_backend.controller;
 
 
 import com.hexplatoon.rivalist_backend.entity.Image;
-import com.hexplatoon.rivalist_backend.service.ImageServices;
+import com.hexplatoon.rivalist_backend.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
-@RequestMapping("/screenshot")
+@RequestMapping("/image")
 @RequiredArgsConstructor
 public class ImageController {
 
-    private final Image image;
-    private final ImageServices imageServices;
+    private final ImageService imageService;
 
     @PostMapping
-    public ResponseEntity<String> getScreenshot(@RequestBody String html) throws Exception {
-        image.setHtmlContent(html);
-        imageServices.captureScreenshot(image.getHtmlContent());
-        return ResponseEntity.ok("Screenshot captured");
+    public ResponseEntity<?> saveImage(@RequestBody Image image) {
+        imageService.save(image);
+        return ResponseEntity.ok(Map.of("message", "Image Saved"));
+    }
+
+
+    @GetMapping //Only for testing
+    public Image findRandomImages() {
+        return imageService.findRandomImages();
     }
 }
