@@ -128,6 +128,15 @@ public class User implements UserDetails {
     private Integer codeforcesRating = 1200;
 
     /**
+     * Current online status of the user.
+     * Default is OFFLINE.
+     */
+    @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private UserStatus status = UserStatus.OFFLINE;
+
+    /**
      * Sets default values before persisting a new user.
      */
     @PrePersist
@@ -189,5 +198,11 @@ public class User implements UserDetails {
 //    public boolean isEnabled() {
 //        return accountStatus == AccountStatus.ACTIVE || accountStatus == AccountStatus.PENDING;
 //    }
+
+    public enum UserStatus {
+        OFFLINE,
+        ONLINE,
+        IN_BATTLE
+    }
 }
 

@@ -1,4 +1,4 @@
-package com.hexplatoon.rivalist_backend.dto;
+package com.hexplatoon.rivalist_backend.dto.auth;
 
 import java.time.LocalDateTime;
 import java.util.List;

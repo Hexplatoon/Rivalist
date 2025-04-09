@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChallengeRequest {
+public class Challenge {
 
     // TODO : Rename the dto and the entity to Challenge
     @Id
@@ -46,8 +46,9 @@ public class ChallengeRequest {
     @Column(name = "status", nullable = false, length = 20)
     private ChallengeStatus status;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 20)
-    private String eventType;
+    private EventType eventType;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -62,6 +63,10 @@ public class ChallengeRequest {
         DECLINED,
         EXPIRED,
         CANCELLED
+    }
+
+    public enum EventType {
+        CSS, TB, CF
     }
 }
 

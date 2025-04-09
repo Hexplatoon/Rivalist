@@ -1,4 +1,4 @@
-package com.hexplatoon.rivalist_backend.service;
+package com.hexplatoon.rivalist_backend.service.user;
 
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;

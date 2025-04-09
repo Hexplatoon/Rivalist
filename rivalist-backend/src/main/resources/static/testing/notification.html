@@ -20,6 +20,11 @@
     Connect to Notifications
   </button>
 
+  <button id="disconnectBtn"
+          class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition hidden">
+    Disconnect
+  </button>
+
   <div id="status" class="text-sm text-gray-400">🔌 Not connected</div>
 
   <div id="notifications"
@@ -37,6 +42,9 @@
 
     stompClient.connect({ Authorization: `Bearer ${jwt}` }, () => {
       document.getElementById("status").innerText = "✅ Connected to WebSocket";
+      document.getElementById("disconnectBtn").classList.remove("hidden");
+      document.getElementById("connectBtn").disabled = true;
+
       const notificationBox = document.getElementById("notifications");
       notificationBox.innerHTML = '';
 
@@ -60,6 +68,16 @@
     const jwt = document.getElementById("jwtInput").value.trim();
     if (!jwt) return alert("Please enter a JWT token.");
     connectToWebSocket(jwt);
+  });
+
+  document.getElementById("disconnectBtn").addEventListener("click", () => {
+    if (stompClient && stompClient.connected) {
+      stompClient.disconnect(() => {
+        document.getElementById("status").innerText = "🔌 Disconnected from WebSocket";
+        document.getElementById("disconnectBtn").classList.add("hidden");
+        document.getElementById("connectBtn").disabled = false;
+      });
+    }
   });
 </script>
 </body>

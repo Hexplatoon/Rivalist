@@ -1,9 +1,9 @@
 package com.hexplatoon.rivalist_backend.controller;
 
 import com.hexplatoon.rivalist_backend.dto.ApiResponse;
-import com.hexplatoon.rivalist_backend.dto.FriendRequestDto;
-import com.hexplatoon.rivalist_backend.dto.FriendStatusDto;
-import com.hexplatoon.rivalist_backend.dto.ProfileDto;
+import com.hexplatoon.rivalist_backend.dto.friend.FriendRequestDto;
+import com.hexplatoon.rivalist_backend.dto.friend.FriendStatusDto;
+import com.hexplatoon.rivalist_backend.dto.user.ProfileDto;
 import com.hexplatoon.rivalist_backend.service.FriendService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

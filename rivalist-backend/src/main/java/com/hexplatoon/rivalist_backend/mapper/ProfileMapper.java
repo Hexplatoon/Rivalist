@@ -1,6 +1,6 @@
 package com.hexplatoon.rivalist_backend.mapper;
 
-import com.hexplatoon.rivalist_backend.dto.ProfileDto;
+import com.hexplatoon.rivalist_backend.dto.user.ProfileDto;
 import com.hexplatoon.rivalist_backend.entity.User;
 
 public class ProfileMapper {

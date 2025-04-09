@@ -1,11 +1,11 @@
 package com.hexplatoon.rivalist_backend.controller;
 
-import com.hexplatoon.rivalist_backend.dto.AuthRequest;
-import com.hexplatoon.rivalist_backend.dto.AuthResponse;
-import com.hexplatoon.rivalist_backend.dto.RegisterRequest;
+import com.hexplatoon.rivalist_backend.dto.auth.AuthRequest;
+import com.hexplatoon.rivalist_backend.dto.auth.AuthResponse;
+import com.hexplatoon.rivalist_backend.dto.auth.RegisterRequest;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.service.AuthService;
-import com.hexplatoon.rivalist_backend.service.CurrentUserService;
+import com.hexplatoon.rivalist_backend.service.user.CurrentUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

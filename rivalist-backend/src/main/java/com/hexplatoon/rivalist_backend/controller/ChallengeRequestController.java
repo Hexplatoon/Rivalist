@@ -1,9 +1,9 @@
 package com.hexplatoon.rivalist_backend.controller;
 
-import com.hexplatoon.rivalist_backend.dto.ChallengeCreateDto;
-import com.hexplatoon.rivalist_backend.dto.ChallengeRequestDto;
-import com.hexplatoon.rivalist_backend.service.ChallengeRequestService;
-import com.hexplatoon.rivalist_backend.service.CurrentUserService;
+import com.hexplatoon.rivalist_backend.dto.challenge.ChallengeCreateDto;
+import com.hexplatoon.rivalist_backend.dto.challenge.ChallengeRequestDto;
+import com.hexplatoon.rivalist_backend.service.ChallengeService;
+import com.hexplatoon.rivalist_backend.service.user.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +16,7 @@ import java.util.List;
 public class ChallengeRequestController {
 
     // TODO : remove all the principle objects from each method
-    private final ChallengeRequestService challengeRequestService;
+    private final ChallengeService challengeService;
     private final CurrentUserService currentUserService;
 
     /**
@@ -27,26 +27,23 @@ public class ChallengeRequestController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public ChallengeRequestDto createChallenge(@RequestBody ChallengeCreateDto challengeCreateDto) {
-        return challengeRequestService.createChallenge(
+        return challengeService.createChallenge(
                 currentUserService.getCurrentUsername(),
                 challengeCreateDto.getUsername(),
                 challengeCreateDto.getEventType());
     }
 
-    // Not working for now
-//    /**
-//     * Endpoint to accept a challenge received by a user
-//     * @param principal
-//     * @param id challenge id
-//     * @return ChallengeRequestDto
-//     */
-//    @PostMapping("/{id}/accept")
-//    public ChallengeRequestDto acceptChallenge(
-//            @AuthenticationPrincipal Principal principal,
-//            @PathVariable Long id) {
-//        return challengeRequestService.acceptChallenge(principal.getName(), id);
-//    }
-
+    /**
+     * Endpoint to accept a challenge received by a user
+     * @param principal
+     * @param id challenge id
+     * @return ChallengeRequestDto
+     */
+    @PostMapping("/{id}/accept")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void acceptChallenge(@PathVariable Long id) {
+        challengeService.acceptChallenge(currentUserService.getCurrentUsername(), id);
+    }
     /**
      * Endpoint to decline a challenge received by a user
      * @param id
@@ -57,7 +54,7 @@ public class ChallengeRequestController {
     @PostMapping("/{id}/decline")
     public ChallengeRequestDto declineChallenge(@PathVariable Long id) {
 
-        return challengeRequestService.declineChallenge(
+        return challengeService.declineChallenge(
                 currentUserService.getCurrentUsername(), id);
     }
 
@@ -71,17 +68,17 @@ public class ChallengeRequestController {
 
     @GetMapping("/pending")
     public List<ChallengeRequestDto> getPendingChallenges() {
-        return challengeRequestService.getPendingChallengesForUser(currentUserService.getCurrentUsername());
+        return challengeService.getPendingChallengesForUser(currentUserService.getCurrentUsername());
     }
 
     @GetMapping("/sent")
     public List<ChallengeRequestDto> getSentChallenges() {
-        return challengeRequestService.getPendingChallengesSentByUser(currentUserService.getCurrentUsername());
+        return challengeService.getPendingChallengesSentByUser(currentUserService.getCurrentUsername());
     }
 
     @GetMapping("/{id}")
     public ChallengeRequestDto getChallengeById(@PathVariable Long id) {
-        return challengeRequestService.getChallengeById(id);
+        return challengeService.getChallengeById(id);
     }
 
     // Not Required

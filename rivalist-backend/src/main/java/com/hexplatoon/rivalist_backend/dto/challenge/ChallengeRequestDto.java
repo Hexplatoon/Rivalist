@@ -1,6 +1,7 @@
-package com.hexplatoon.rivalist_backend.dto;
+package com.hexplatoon.rivalist_backend.dto.challenge;
 
-import com.hexplatoon.rivalist_backend.entity.ChallengeRequest.ChallengeStatus;
+import com.hexplatoon.rivalist_backend.entity.Challenge.EventType;
+import com.hexplatoon.rivalist_backend.entity.Challenge.ChallengeStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,9 +17,8 @@ public class ChallengeRequestDto {
     private Long id;
     private String senderUsername;
     private String recipientUsername;
-//    private Long battleId;
     private ChallengeStatus status;
-    private String eventType;
+    private EventType eventType;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     private Long timeRemainingSeconds; // Calculated field for frontend display

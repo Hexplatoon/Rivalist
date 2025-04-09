@@ -1,4 +1,4 @@
-package com.hexplatoon.rivalist_backend.dto;
+package com.hexplatoon.rivalist_backend.dto.friend;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

@@ -1,8 +1,8 @@
 package com.hexplatoon.rivalist_backend.service;
 
-import com.hexplatoon.rivalist_backend.dto.AuthRequest;
-import com.hexplatoon.rivalist_backend.dto.AuthResponse;
-import com.hexplatoon.rivalist_backend.dto.RegisterRequest;
+import com.hexplatoon.rivalist_backend.dto.auth.AuthRequest;
+import com.hexplatoon.rivalist_backend.dto.auth.AuthResponse;
+import com.hexplatoon.rivalist_backend.dto.auth.RegisterRequest;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.exception.InvalidJwtAuthenticationException;
 import com.hexplatoon.rivalist_backend.repository.UserRepository;

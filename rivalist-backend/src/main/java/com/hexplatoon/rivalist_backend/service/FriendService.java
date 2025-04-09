@@ -1,6 +1,6 @@
 package com.hexplatoon.rivalist_backend.service;
 
-import com.hexplatoon.rivalist_backend.dto.ProfileDto;
+import com.hexplatoon.rivalist_backend.dto.user.ProfileDto;
 import com.hexplatoon.rivalist_backend.entity.Friend;
 import com.hexplatoon.rivalist_backend.entity.Friend.FriendshipStatus;
 import com.hexplatoon.rivalist_backend.entity.User;

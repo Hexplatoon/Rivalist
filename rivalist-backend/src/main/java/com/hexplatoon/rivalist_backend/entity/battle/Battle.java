@@ -1,9 +1,8 @@
-package com.hexplatoon.rivalist_backend.entity;
+package com.hexplatoon.rivalist_backend.entity.battle;
 
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -43,13 +42,19 @@ public class Battle {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Lob
     @Column(name = "result_json", columnDefinition = "TEXT")
     private String resultJson;
+
+    @Lob
+    @Column(name = "config_json", columnDefinition = "TEXT")
+    private String configJson;
 
     @Column(name = "winner_id")
     private Long winnerId;
@@ -59,7 +64,10 @@ public class Battle {
     }
 
     public enum Status {
-        ONGOING, CANCELED, ENDED
+        ONGOING, CANCELED, ENDED, WAITING
     }
+
+    private boolean challengerOk = false;
+    private boolean opponentOk = false;
 }
 

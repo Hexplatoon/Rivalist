@@ -1,5 +1,6 @@
-package com.hexplatoon.rivalist_backend.dto;
+package com.hexplatoon.rivalist_backend.dto.challenge;
 
+import com.hexplatoon.rivalist_backend.entity.Challenge.EventType;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,6 +16,6 @@ public class ChallengeCreateDto {
     private String username;
     
     @NotBlank(message = "Event type is required")
-    private String eventType;
+    private EventType eventType;
 }
 

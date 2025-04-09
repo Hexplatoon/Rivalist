@@ -1,6 +1,5 @@
-package com.hexplatoon.rivalist_backend.dto;
+package com.hexplatoon.rivalist_backend.dto.auth;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;

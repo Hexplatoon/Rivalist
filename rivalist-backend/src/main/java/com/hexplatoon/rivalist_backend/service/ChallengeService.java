@@ -1,8 +1,9 @@
 package com.hexplatoon.rivalist_backend.service;
 
-import com.hexplatoon.rivalist_backend.dto.ChallengeRequestDto;
-import com.hexplatoon.rivalist_backend.entity.ChallengeRequest;
-import com.hexplatoon.rivalist_backend.entity.ChallengeRequest.ChallengeStatus;
+import com.hexplatoon.rivalist_backend.dto.challenge.ChallengeRequestDto;
+import com.hexplatoon.rivalist_backend.entity.battle.Battle;
+import com.hexplatoon.rivalist_backend.entity.Challenge;
+import com.hexplatoon.rivalist_backend.entity.Challenge.ChallengeStatus;
 import com.hexplatoon.rivalist_backend.entity.Friend;
 import com.hexplatoon.rivalist_backend.entity.User;
 import com.hexplatoon.rivalist_backend.repository.ChallengeRequestRepository;
@@ -12,7 +13,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @Validated
 @RequiredArgsConstructor
-public class ChallengeRequestService {
+public class ChallengeService {
 
     // TODO : Use friend service in place of friend repository
     private final ChallengeRequestRepository challengeRequestRepository;
@@ -35,6 +35,7 @@ public class ChallengeRequestService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final FriendService friendService;
+    private final BattleService battleService;
 
     /**
      * Create a new challenge request from one user to another
@@ -45,7 +46,7 @@ public class ChallengeRequestService {
     @Transactional
     public ChallengeRequestDto createChallenge(@NotBlank String senderUsername,
                                                @NotBlank String recipientUsername,
-                                               @NotBlank String eventType) {
+                                               Challenge.EventType eventType) {
         if (senderUsername.equals(recipientUsername)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot challenge yourself");
         }
@@ -58,7 +59,7 @@ public class ChallengeRequestService {
 
         // Check if there's already a pending challenge
         // TODO : change the check in pendingchallengebwtusers for type
-        Optional<ChallengeRequest> existingChallenge = 
+        Optional<Challenge> existingChallenge =
             challengeRequestRepository.findPendingChallengeBetweenUsers(sender, recipient);
         
         if (existingChallenge.isPresent()) {
@@ -69,7 +70,7 @@ public class ChallengeRequestService {
         LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(60);
 
         // Create new challenge
-        ChallengeRequest challenge = ChallengeRequest.builder()
+        Challenge challenge = Challenge.builder()
                 .sender(sender)
                 .recipient(recipient)
                 .status(ChallengeStatus.PENDING)
@@ -77,7 +78,7 @@ public class ChallengeRequestService {
                 .expiresAt(expiresAt)
                 .build();
 
-        ChallengeRequest savedChallenge = challengeRequestRepository.save(challenge);
+        Challenge savedChallenge = challengeRequestRepository.save(challenge);
         
         // Notify recipient about the challenge
         notificationService.createNotification(
@@ -91,41 +92,31 @@ public class ChallengeRequestService {
     }
 
     // Not working for now
-//    /**
-//     * Accept a challenge and create a battle
-//     * @param recipientUsername Username of the recipient accepting the challenge
-//     * @param challengeId ID of the challenge to accept
-//     * @return The challenge request as DTO with updated status
-//     */
-//    @Transactional
-//    public ChallengeRequestDto acceptChallenge(@NotBlank String recipientUsername, Long challengeId) {
-//        User recipient = findUserByUsername(recipientUsername);
-//
-//        ChallengeRequest challenge = challengeRequestRepository.findById(challengeId)
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
-//
-//        // Validate challenge status and recipient
-//        validateChallengeStatus(challenge, recipient, ChallengeStatus.PENDING);
-//
-//        // Update challenge status
-//        challenge.setStatus(ChallengeStatus.ACCEPTED);
-//
-//        // Create a battle for the challenge
-//        Battle battle = battleService.createBattle(
-//                challenge.getEventType(),
-//                challenge.getSender().getId(),
-//                challenge.getRecipient().getId()
-//        );
-//
-//        // Link battle to challenge
-//        challenge.setBattle(battle);
-//        ChallengeRequest updatedChallenge = challengeRequestRepository.save(challenge);
-//
-//        // Notify users about acceptance
-//        notifyChallengeAccepted(updatedChallenge);
-//
-//        return convertToDto(updatedChallenge);
-//    }
+    /**
+     * Accept a challenge and create a battle
+     * @param recipientUsername Username of the recipient accepting the challenge
+     * @param challengeId ID of the challenge to accept
+     * @return The challenge request as DTO with updated status
+     */
+    @Transactional
+    public void acceptChallenge(@NotBlank String recipientUsername, Long challengeId) {
+        User recipient = findUserByUsername(recipientUsername);
+
+        Challenge challenge = challengeRequestRepository.findById(challengeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
+
+        // Validate challenge status and recipient
+        validateChallengeStatus(challenge, recipient, ChallengeStatus.PENDING);
+
+        // Update challenge status
+        challenge.setStatus(ChallengeStatus.ACCEPTED);
+
+        battleService.createBattle(
+                challenge.getEventType(),
+                challenge.getSender().getId(),
+                challenge.getRecipient().getId()
+        );
+    }
 
     /**
      * Decline a challenge
@@ -137,7 +128,7 @@ public class ChallengeRequestService {
     public ChallengeRequestDto declineChallenge(@NotBlank String recipientUsername, Long challengeId) {
         User recipient = findUserByUsername(recipientUsername);
         
-        ChallengeRequest challenge = challengeRequestRepository.findById(challengeId)
+        Challenge challenge = challengeRequestRepository.findById(challengeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
         
         // Validate challenge status and recipient
@@ -145,7 +136,7 @@ public class ChallengeRequestService {
         
         // Update challenge status
         challenge.setStatus(ChallengeStatus.DECLINED);
-        ChallengeRequest updatedChallenge = challengeRequestRepository.save(challenge);
+        Challenge updatedChallenge = challengeRequestRepository.save(challenge);
         
         // Notify users about decline
         String senderUsername = updatedChallenge.getSender().getUsername();
@@ -198,7 +189,7 @@ public class ChallengeRequestService {
     @Transactional(readOnly = true)
     public List<ChallengeRequestDto> getPendingChallengesForUser(@NotBlank String username) {
         User user = findUserByUsername(username);
-        List<ChallengeRequest> challenges = challengeRequestRepository.findByRecipientAndStatus(user, ChallengeStatus.PENDING);
+        List<Challenge> challenges = challengeRequestRepository.findByRecipientAndStatus(user, ChallengeStatus.PENDING);
         return challenges.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -212,7 +203,7 @@ public class ChallengeRequestService {
     @Transactional(readOnly = true)
     public List<ChallengeRequestDto> getPendingChallengesSentByUser(@NotBlank String username) {
         User user = findUserByUsername(username);
-        List<ChallengeRequest> challenges = challengeRequestRepository.findBySenderAndStatus(user, ChallengeStatus.PENDING);
+        List<Challenge> challenges = challengeRequestRepository.findBySenderAndStatus(user, ChallengeStatus.PENDING);
         return challenges.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -225,7 +216,7 @@ public class ChallengeRequestService {
      */
     @Transactional(readOnly = true)
     public ChallengeRequestDto getChallengeById(Long challengeId) {
-        ChallengeRequest challenge = challengeRequestRepository.findById(challengeId)
+        Challenge challenge = challengeRequestRepository.findById(challengeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
         return convertToDto(challenge);
     }
@@ -238,9 +229,9 @@ public class ChallengeRequestService {
     @Transactional
     public void handleExpiredChallenges() {
         LocalDateTime now = LocalDateTime.now();
-        List<ChallengeRequest> expiredChallenges = challengeRequestRepository.findExpiredChallenges(now);
+        List<Challenge> expiredChallenges = challengeRequestRepository.findExpiredChallenges(now);
         
-        for (ChallengeRequest challenge : expiredChallenges) {
+        for (Challenge challenge : expiredChallenges) {
             challenge.setStatus(ChallengeStatus.EXPIRED);
             challengeRequestRepository.save(challenge);
         }
@@ -260,7 +251,7 @@ public class ChallengeRequestService {
     /**
      * Validate challenge status and recipient
      */
-    private void validateChallengeStatus(ChallengeRequest challenge, User recipient, ChallengeStatus expectedStatus) {
+    private void validateChallengeStatus(Challenge challenge, User recipient, ChallengeStatus expectedStatus) {
         if (!challenge.getRecipient().equals(recipient)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This challenge is not for you");
         }
@@ -282,7 +273,7 @@ public class ChallengeRequestService {
     /**
      * Convert challenge entity to DTO
      */
-    private ChallengeRequestDto convertToDto(ChallengeRequest challenge) {
+    private ChallengeRequestDto convertToDto(Challenge challenge) {
         Long timeRemaining = null;
         if (challenge.getStatus() == ChallengeStatus.PENDING) {
             timeRemaining = Math.max(0, Duration.between(LocalDateTime.now(), challenge.getExpiresAt()).getSeconds());
