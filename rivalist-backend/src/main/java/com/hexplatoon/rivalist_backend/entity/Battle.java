@@ -1,4 +1,4 @@
-package com.hexplatoon.rivalist_backend.entity.battle;
+package com.hexplatoon.rivalist_backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "battles", indexes = {
-        @Index(name = "idx_player1", columnList = "player1_id"),
-        @Index(name = "idx_player2", columnList = "player2_id"),
+        @Index(name = "idx_challenger", columnList = "challenger"),
+        @Index(name = "idx_opponent", columnList = "opponent"),
         @Index(name = "idx_status", columnList = "status"),
         @Index(name = "idx_category", columnList = "category")
 })
@@ -28,11 +28,13 @@ public class Battle {
     @Column(nullable = false)
     private Category category;
 
-    @Column(name = "player1_id", nullable = false)
-    private Long player1Id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "challenger", nullable = false)
+    private User challenger;
 
-    @Column(name = "player2_id", nullable = false)
-    private Long player2Id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opponent", nullable = false)
+    private User opponent;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -66,8 +68,5 @@ public class Battle {
     public enum Status {
         ONGOING, CANCELED, ENDED, WAITING
     }
-
-    private boolean challengerOk = false;
-    private boolean opponentOk = false;
 }
 

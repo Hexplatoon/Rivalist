@@ -1,5 +1,6 @@
 package com.hexplatoon.rivalist_backend.mapper;
 
+import com.hexplatoon.rivalist_backend.dto.user.MiniProfileDto;
 import com.hexplatoon.rivalist_backend.dto.user.ProfileDto;
 import com.hexplatoon.rivalist_backend.entity.User;
 
@@ -18,6 +19,16 @@ public class ProfileMapper {
                 .codeforcesRating(user.getCodeforcesRating())
                 .cssDesignRating(user.getCssDesignRating())
                 .codeforcesRating(user.getCodeforcesRating())
+                .build();
+        return dto;
+    }
+    public static MiniProfileDto toMiniProfileDto(User user){
+        MiniProfileDto dto = MiniProfileDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .profilePicture(user.getProfilePicture())
                 .build();
         return dto;
     }

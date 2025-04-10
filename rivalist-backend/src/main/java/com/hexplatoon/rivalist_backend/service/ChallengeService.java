@@ -1,7 +1,6 @@
 package com.hexplatoon.rivalist_backend.service;
 
 import com.hexplatoon.rivalist_backend.dto.challenge.ChallengeRequestDto;
-import com.hexplatoon.rivalist_backend.entity.battle.Battle;
 import com.hexplatoon.rivalist_backend.entity.Challenge;
 import com.hexplatoon.rivalist_backend.entity.Challenge.ChallengeStatus;
 import com.hexplatoon.rivalist_backend.entity.Friend;
@@ -105,6 +104,7 @@ public class ChallengeService {
         Challenge challenge = challengeRequestRepository.findById(challengeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Challenge not found"));
 
+        User sender = challenge.getSender();
         // Validate challenge status and recipient
         validateChallengeStatus(challenge, recipient, ChallengeStatus.PENDING);
 
@@ -113,8 +113,8 @@ public class ChallengeService {
 
         battleService.createBattle(
                 challenge.getEventType(),
-                challenge.getSender().getId(),
-                challenge.getRecipient().getId()
+                sender.getUsername(),
+                recipientUsername
         );
     }
 

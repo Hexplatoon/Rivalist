@@ -1,6 +1,5 @@
-package com.hexplatoon.rivalist_backend.entity.battle;
+package com.hexplatoon.rivalist_backend.dto.battle;
 
-import com.hexplatoon.rivalist_backend.dto.battle.BattleProgress;
 import lombok.Builder;
 import lombok.Data;
 

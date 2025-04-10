@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 // TODO : Add swagger api doc
 // TODO : Create CurrentUserService to get currently authenticated user
 // TODO : Create a user service for finding users
+// TODO : Add forfiet and submit
 @SpringBootApplication
 @EnableScheduling
 public class RivalistBackendApplication {

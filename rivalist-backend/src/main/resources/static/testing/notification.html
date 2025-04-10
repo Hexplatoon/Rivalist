@@ -15,6 +15,9 @@
   <input id="jwtInput" type="text" placeholder="Paste JWT token"
          class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
 
+  <input id="usernameInput" type="text" placeholder="Enter your username"
+         class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
   <button id="connectBtn"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition">
     Connect to Notifications
@@ -36,7 +39,7 @@
 <script>
   let stompClient = null;
 
-  function connectToWebSocket(jwt) {
+  function connectToWebSocket(jwt, currentUsername) {
     const socket = new SockJS("/ws");
     stompClient = Stomp.over(socket);
 
@@ -48,6 +51,7 @@
       const notificationBox = document.getElementById("notifications");
       notificationBox.innerHTML = '';
 
+      // 🔔 General notifications
       stompClient.subscribe("/user/queue/notifications", (msg) => {
         const data = JSON.parse(msg.body);
         const text = data.message || msg.body;
@@ -59,6 +63,40 @@
         notificationBox.appendChild(p);
         notificationBox.scrollTop = notificationBox.scrollHeight;
       });
+
+      let battleId;
+
+      // 🧩 Battle notifications
+      stompClient.subscribe("/user/topic/battle", (msg) => {
+        const data = JSON.parse(msg.body);
+        const text = data.message;
+        battleId = data.battleId;
+
+        const container = document.createElement("div");
+        container.className = "bg-purple-700 text-white p-4 rounded-lg shadow space-y-2";
+
+        const info = document.createElement("p");
+        info.innerHTML = `<strong>🧩 Battle Alert:</strong> ${text}<br><span class="text-sm text-purple-200">Battle ID: ${battleId}</span>`;
+
+        const readyBtn = document.createElement("button");
+        readyBtn.textContent = "I'm Ready!";
+        readyBtn.className = "bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded shadow transition";
+
+        readyBtn.onclick = () => {
+          const isChallenger = data.challengerUsername === currentUsername;
+
+          stompClient.send("/app/battle/ready", {}, JSON.stringify(battleId));
+
+          readyBtn.disabled = true;
+          readyBtn.textContent = "✅ Ready Sent!";
+        };
+
+        container.appendChild(info);
+        container.appendChild(readyBtn);
+
+        notificationBox.appendChild(container);
+        notificationBox.scrollTop = notificationBox.scrollHeight;
+      });
     }, (err) => {
       document.getElementById("status").innerText = `❌ Connection failed: ${err}`;
     });
@@ -66,8 +104,9 @@
 
   document.getElementById("connectBtn").addEventListener("click", () => {
     const jwt = document.getElementById("jwtInput").value.trim();
-    if (!jwt) return alert("Please enter a JWT token.");
-    connectToWebSocket(jwt);
+    const username = document.getElementById("usernameInput").value.trim();
+    if (!jwt || !username) return alert("Please enter both JWT token and username.");
+    connectToWebSocket(jwt, username);
   });
 
   document.getElementById("disconnectBtn").addEventListener("click", () => {
