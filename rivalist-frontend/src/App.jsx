@@ -1,20 +1,31 @@
+// App.jsx
 import React from "react";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Nav from "./components/Navbar";
-import "./App.css";
 import LandingPage from "./components/pages/LandingPage";
-import {Routes , Route} from 'react-router-dom'
-import LoginPage from './components/LoginPage.jsx'
-function App() {
-  
+import Signup from "./components/SignUp";
+import { AuthProvider } from "./components/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Toaster } from 'sonner';
 
+function App() {
   return (
-    <div className="h-screen">
-      <Nav />
-      <Routes>
-        <Route path = "/" element={<LandingPage/>}/>
-        <Route path = "/login" element={<LoginPage/>}/>
-      </Routes>
-    </div>
+      <AuthProvider>
+        <Toaster position="top-right" richColors />
+        <Nav />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
   );
 }
 

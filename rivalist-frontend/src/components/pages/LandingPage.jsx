@@ -11,7 +11,7 @@ function LandingPage() {
   };
   return <>
     <section className="h-screen relative flex flex-col items-center justify-center mb-0">
-        {/* <BlobBackground/> */}
+        <BlobBackground/>
 
         <div className="relative z-10 text-center text-white">
           <h1 className="text-8xl font-bold -mt-14 mb-10 bg-gradient-to-r from-sky-400 via-purple-500 to-pink-400 inline-block text-transparent bg-clip-text">Rivalist</h1>
