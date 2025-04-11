@@ -1,0 +1,59 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    color: white;
+    font-family: sans-serif;
+  }
+  
+  .typing-test {
+    width: 100%;
+    min-height: 100vh;
+    padding: 2rem;
+    box-sizing: border-box;
+  }
+  
+  .test-paragraph {
+    font-size: 1.2rem;
+    max-width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .typing-input {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #555;
+  }
+  
+  .keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 2rem;
+  }
+  
+  .keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .key {
+    padding: 1rem;
+    border-radius: 5px;
+    background-color: #333;
+    color: #fff;
+    font-size: 1rem;
+    text-align: center;
+    width: 3rem;
+  }
+  
+  .key.pressed {
+    background-color: #ff0;
+    color: #000;
+  }
+  

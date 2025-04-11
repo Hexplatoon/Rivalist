@@ -1,0 +1,14 @@
+.result {
+    padding: 2rem;
+  }
+  
+  .wpm-score-sec {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  canvas {
+    margin-top: 20px;
+  }
+  
