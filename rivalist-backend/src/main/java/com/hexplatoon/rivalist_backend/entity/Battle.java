@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class Battle {
 
     @Id
@@ -58,8 +59,11 @@ public class Battle {
     @Column(name = "config_json", columnDefinition = "TEXT")
     private String configJson;
 
-    @Column(name = "winner_id")
-    private Long winnerId;
+    @Column(name = "winner_username")
+    private String winnerUsername;
+
+    @Column(name = "duration", nullable = false)
+    private Integer duration;
 
     public enum Category {
         CSS, TB, CF

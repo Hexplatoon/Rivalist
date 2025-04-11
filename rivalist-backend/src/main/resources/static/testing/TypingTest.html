@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Typing Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans flex flex-col items-center p-8 min-h-screen">
+<h1 class="text-4xl font-bold mb-8 text-blue-400">⌨️ Typing Test</h1>
+
+<div class="w-full max-w-xl space-y-4">
+    <!-- Connection Panel -->
+    <div id="connectionPanel" class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 class="text-xl font-semibold mb-4 text-blue-300">Connect to Server</h2>
+        <input id="jwtInput" type="text" placeholder="Paste JWT token"
+               class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3">
+
+        <input id="usernameInput" type="text" placeholder="Enter your username"
+               class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <button id="connectBtn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition mt-4">
+            Connect
+        </button>
+
+        <button id="disconnectBtn"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition mt-2 hidden">
+            Disconnect
+        </button>
+
+        <div id="status" class="text-sm text-gray-400 mt-3">🔌 Not connected</div>
+    </div>
+
+    <!-- Challenge Panel -->
+    <div id="challengePanel" class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 class="text-xl font-semibold mb-4 text-purple-300">Challenge a Friend</h2>
+        <input id="challengeUsername" type="text" placeholder="Friend's username"
+               class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3">
+
+        <button id="sendChallengeBtn"
+                class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition">
+            Send Challenge
+        </button>
+    </div>
+
+    <!-- Notifications Panel -->
+    <div id="notificationsPanel" class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <h2 class="text-lg font-semibold mb-2 text-blue-300">Notifications</h2>
+        <div id="notifications" class="bg-gray-700 rounded p-4 shadow-inner space-y-2 h-32 overflow-y-auto">
+            <p class="text-gray-500 text-sm">No notifications yet.</p>
+        </div>
+    </div>
+
+    <!-- Typing Test Panel (initially hidden) -->
+    <div id="typingTestPanel" class="bg-gray-800 rounded-lg p-6 border border-gray-700 hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-green-400">Typing Test</h2>
+            <div id="timerDisplay" class="text-2xl font-bold text-white">00:00</div>
+        </div>
+
+        <div id="textToType" class="bg-gray-700 p-4 rounded-lg mb-4 text-gray-100 leading-relaxed">
+            Text will appear here when the test starts.
+        </div>
+
+        <textarea id="userInput"
+                  class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 h-32"
+                  placeholder="Type the text here when the test starts..."
+                  disabled></textarea>
+
+        <div class="flex justify-between mt-4">
+            <div id="progressStats" class="text-sm text-gray-400">
+                Words: 0/0 | Accuracy: 0%
+            </div>
+            <div id="resultMessage" class="text-sm text-gray-400"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global variables
+    let stompClient = null;
+    let battleId = null;
+    let timer = null;
+    let totalDuration = 0;
+    let originalText = "";
+
+    // Connect to WebSocket
+    function connectToWebSocket(jwt, username) {
+        const socket = new SockJS("/ws");
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({ Authorization: `Bearer ${jwt}` }, () => {
+            document.getElementById("status").innerText = "✅ Connected to WebSocket";
+            document.getElementById("disconnectBtn").classList.remove("hidden");
+            document.getElementById("connectBtn").disabled = true;
+
+            clearNotifications();
+            addNotification("Successfully connected to the server");
+
+            // Subscribe to general notifications
+            stompClient.subscribe("/user/topic/notifications", handleNotification);
+
+            // Subscribe to battle creation
+            stompClient.subscribe("/user/topic/battle/create", handleBattleCreate);
+
+            // Subscribe to battle start
+            stompClient.subscribe("/user/topic/battle/start", handleBattleStart);
+
+            // Subscribe to challenge notifications
+            stompClient.subscribe("/user/topic/challenge", handleChallenge);
+
+            // Subscribe to end notifications
+            stompClient.subscribe("/user/topic/end", handleBattleEnd);
+
+        }, (err) => {
+            document.getElementById("status").innerText = `❌ Connection failed: ${err}`;
+        });
+    }
+
+    // Handle general notifications
+    function handleNotification(msg) {
+        const data = JSON.parse(msg.body);
+        const text = data.message || msg.body;
+        addNotification(text);
+    }
+
+    // Handle battle creation
+    function handleBattleCreate(msg) {
+        const data = JSON.parse(msg.body);
+        battleId = data.battleId;
+        addNotification(`🎮 Battle created: ${data.message}`);
+
+        // Show ready button
+        const readyBtn = document.createElement("button");
+        readyBtn.textContent = "I'm Ready!";
+        readyBtn.className = "bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded shadow transition mt-2 w-full";
+        readyBtn.onclick = () => {
+            stompClient.send("/app/battle/ready", {}, JSON.stringify(battleId));
+            readyBtn.disabled = true;
+            readyBtn.textContent = "✅ Ready Sent!";
+            addNotification("Ready status sent to server");
+        };
+
+        document.getElementById("notificationsPanel").appendChild(readyBtn);
+    }
+
+    // Handle battle start
+    function handleBattleStart(msg) {
+        const data = JSON.parse(msg.body);
+        const duration = data.config.duration;
+        const text = data.config.text;
+
+        // Show typing test panel
+        document.getElementById("typingTestPanel").classList.remove("hidden");
+
+        // Store original text
+        originalText = text;
+
+        // Display text to type
+        document.getElementById("textToType").textContent = text;
+
+        // Enable input
+        const userInput = document.getElementById("userInput");
+        userInput.disabled = false;
+        userInput.value = "";
+        userInput.focus();
+
+        // Set up timer
+        totalDuration = duration;
+        startTimer(duration);
+
+        // Update progress stats
+        const totalWords = text.trim().split(/\s+/).length;
+        document.getElementById("progressStats").textContent = `Words: 0/${totalWords} | Accuracy: 0%`;
+
+        // Add event listener for input
+        userInput.addEventListener("input", updateProgress);
+    }
+
+    // Handle challenge notifications
+    function handleChallenge(msg) {
+        const data = JSON.parse(msg.body);
+        const challengeId = data.challengeId;
+
+        addNotification("You received a typing challenge!");
+
+        // Add accept button
+        const acceptBtn = document.createElement("button");
+        acceptBtn.textContent = "Accept Challenge";
+        acceptBtn.className = "bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-2 rounded shadow transition mt-2 w-full";
+        acceptBtn.onclick = async () => {
+            const jwt = document.getElementById("jwtInput").value.trim();
+            try {
+                await fetch(`http://localhost:8081/api/challenges/${challengeId}/accept`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${jwt}`
+                    }
+                });
+                acceptBtn.disabled = true;
+                acceptBtn.textContent = "✅ Challenge Accepted!";
+                addNotification("Challenge accepted successfully");
+            } catch (err) {
+                addNotification("❌ Failed to accept challenge.");
+                console.error(err);
+            }
+        };
+
+        document.getElementById("notificationsPanel").appendChild(acceptBtn);
+    }
+
+    // Handle battle end notifications
+    function handleBattleEnd(msg) {
+        const data = JSON.parse(msg.body);
+        addNotification(`Battle ended: ${data.message || 'Time is up!'}`);
+
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+
+        document.getElementById("userInput").disabled = true;
+        document.getElementById("resultMessage").textContent = "Battle completed!";
+    }
+
+    // Send challenge to another user
+    async function sendChallenge(username) {
+        const jwt = document.getElementById("jwtInput").value.trim();
+
+        if (!jwt) {
+            addNotification("❌ You need to connect first to send a challenge");
+            return false;
+        }
+
+        try {
+            const response = await fetch("http://localhost:8081/api/challenges/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${jwt}`
+                },
+                body: JSON.stringify({
+                    username: username,
+                    eventType: "TB" // Typing Battle
+                })
+            });
+
+            const data = await response.json();
+            addNotification(`✅ Challenge sent to ${username}!`);
+            return true;
+        } catch (err) {
+            console.error("Failed to send challenge:", err);
+            addNotification(`❌ Failed to send challenge to ${username}`);
+            return false;
+        }
+    }
+
+    // Timer functionality
+    function startTimer(duration) {
+        const timerDisplay = document.getElementById("timerDisplay");
+        let timeRemaining = duration;
+
+        timerDisplay.textContent = formatTime(timeRemaining);
+
+        timer = setInterval(() => {
+            timeRemaining--;
+            timerDisplay.textContent = formatTime(timeRemaining);
+
+            if (timeRemaining <= 0) {
+                clearInterval(timer);
+                endTypingTest();
+            }
+        }, 1000);
+    }
+
+    // Format time as MM:SS
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Calculate typing progress
+    function updateProgress() {
+        const userInput = document.getElementById("userInput").value;
+        const originalWords = originalText.trim().split(/\s+/);
+        const typedWords = userInput.trim().split(/\s+/);
+        const totalWords = originalWords.length;
+        const typedWordsCount = typedWords.length;
+
+        // Calculate words typed
+        let correctWords = 0;
+        for (let i = 0; i < typedWordsCount && i < totalWords; i++) {
+            if (typedWords[i] === originalWords[i]) {
+                correctWords++;
+            }
+        }
+
+        // Calculate accuracy
+        const accuracy = typedWordsCount > 0 ?
+            Math.round((correctWords / typedWordsCount) * 100) : 0;
+
+        document.getElementById("progressStats").textContent =
+            `Words: ${typedWordsCount}/${totalWords} | Accuracy: ${accuracy}%`;
+    }
+
+    // End typing test and submit results
+    function endTypingTest() {
+        const userInput = document.getElementById("userInput");
+        userInput.disabled = true;
+
+        const typedText = userInput.value;
+        document.getElementById("resultMessage").textContent = "Submitting results...";
+
+        // Send results via WebSocket instead of API
+        sendTypingResults(typedText);
+    }
+
+    // Send typing results via WebSocket
+    function sendTypingResults(typedText) {
+        try {
+            // Send results to the WebSocket endpoint
+            stompClient.send("/app/battle/end", {}, JSON.stringify({
+                battleId: battleId,
+                text: typedText
+            }));
+
+            document.getElementById("resultMessage").textContent = "Results submitted successfully!";
+            addNotification("✅ Typing test results submitted");
+        } catch (err) {
+            document.getElementById("resultMessage").textContent = "Failed to submit results.";
+            addNotification("❌ Failed to submit typing test results");
+            console.error(err);
+        }
+    }
+
+    // Add notification to the notifications panel
+    function addNotification(text) {
+        const notificationBox = document.getElementById("notifications");
+
+        // Remove "No notifications yet" message if present
+        if (notificationBox.querySelector(".text-gray-500")) {
+            notificationBox.innerHTML = '';
+        }
+
+        const notification = document.createElement("div");
+        notification.className = "bg-blue-600 text-white px-4 py-2 rounded-lg shadow mb-2";
+        notification.innerHTML = `<span class="text-xs text-blue-200">${new Date().toLocaleTimeString()}</span><br>${text}`;
+
+        notificationBox.appendChild(notification);
+        notificationBox.scrollTop = notificationBox.scrollHeight;
+    }
+
+    // Clear all notifications
+    function clearNotifications() {
+        const notificationBox = document.getElementById("notifications");
+        notificationBox.innerHTML = '';
+    }
+
+    // Event listeners
+    document.addEventListener("DOMContentLoaded", () => {
+        // Connect button
+        document.getElementById("connectBtn").addEventListener("click", () => {
+            const jwt = document.getElementById("jwtInput").value.trim();
+            const username = document.getElementById("usernameInput").value.trim();
+
+            if (!jwt || !username) {
+                alert("Please enter both JWT token and username.");
+                return;
+            }
+
+            connectToWebSocket(jwt, username);
+        });
+
+        // Disconnect button
+        document.getElementById("disconnectBtn").addEventListener("click", () => {
+            if (stompClient && stompClient.connected) {
+                stompClient.disconnect(() => {
+                    document.getElementById("status").innerText = "🔌 Disconnected from WebSocket";
+                    document.getElementById("disconnectBtn").classList.add("hidden");
+                    document.getElementById("connectBtn").disabled = false;
+
+                    // Hide typing test panel
+                    document.getElementById("typingTestPanel").classList.add("hidden");
+
+                    // Clear timer if active
+                    if (timer) {
+                        clearInterval(timer);
+                        timer = null;
+                    }
+
+                    addNotification("Disconnected from server");
+                });
+            }
+        });
+
+        // Send Challenge button
+        document.getElementById("sendChallengeBtn").addEventListener("click", () => {
+            const friendUsername = document.getElementById("challengeUsername").value.trim();
+
+            if (!friendUsername) {
+                alert("Please enter your friend's username.");
+                return;
+            }
+
+            sendChallenge(friendUsername);
+        });
+    });
+</script>
+</body>
+</html>

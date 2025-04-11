@@ -1,7 +1,7 @@
 package com.hexplatoon.rivalist_backend.controller;
 
-import com.hexplatoon.rivalist_backend.dto.challenge.ChallengeCreateDto;
-import com.hexplatoon.rivalist_backend.dto.challenge.ChallengeRequestDto;
+import com.hexplatoon.rivalist_backend.dto.challenge.ChallengeCreateRequestDto;
+import com.hexplatoon.rivalist_backend.dto.challenge.ChallengeDto;
 import com.hexplatoon.rivalist_backend.service.ChallengeService;
 import com.hexplatoon.rivalist_backend.service.user.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/challenges")
 @RequiredArgsConstructor
-public class ChallengeRequestController {
+public class ChallengeController {
 
     // TODO : remove all the principle objects from each method
     private final ChallengeService challengeService;
@@ -21,16 +21,16 @@ public class ChallengeRequestController {
 
     /**
      * Endpoint to create a challenge request in backend
-     * @param challengeCreateDto
+     * @param challengeCreateRequestDto
      * @return ChallengeRequestDto
      */
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public ChallengeRequestDto createChallenge(@RequestBody ChallengeCreateDto challengeCreateDto) {
+    public ChallengeDto createChallenge(@RequestBody ChallengeCreateRequestDto challengeCreateRequestDto) {
         return challengeService.createChallenge(
                 currentUserService.getCurrentUsername(),
-                challengeCreateDto.getUsername(),
-                challengeCreateDto.getEventType());
+                challengeCreateRequestDto.getUsername(),
+                challengeCreateRequestDto.getEventType());
     }
 
     /**
@@ -52,7 +52,7 @@ public class ChallengeRequestController {
 
     // TODO : ChallengeRequestDto response can be replaced with text response
     @PostMapping("/{id}/decline")
-    public ChallengeRequestDto declineChallenge(@PathVariable Long id) {
+    public ChallengeDto declineChallenge(@PathVariable Long id) {
 
         return challengeService.declineChallenge(
                 currentUserService.getCurrentUsername(), id);
@@ -67,17 +67,17 @@ public class ChallengeRequestController {
 //    }
 
     @GetMapping("/pending")
-    public List<ChallengeRequestDto> getPendingChallenges() {
+    public List<ChallengeDto> getPendingChallenges() {
         return challengeService.getPendingChallengesForUser(currentUserService.getCurrentUsername());
     }
 
     @GetMapping("/sent")
-    public List<ChallengeRequestDto> getSentChallenges() {
+    public List<ChallengeDto> getSentChallenges() {
         return challengeService.getPendingChallengesSentByUser(currentUserService.getCurrentUsername());
     }
 
     @GetMapping("/{id}")
-    public ChallengeRequestDto getChallengeById(@PathVariable Long id) {
+    public ChallengeDto getChallengeById(@PathVariable Long id) {
         return challengeService.getChallengeById(id);
     }
 

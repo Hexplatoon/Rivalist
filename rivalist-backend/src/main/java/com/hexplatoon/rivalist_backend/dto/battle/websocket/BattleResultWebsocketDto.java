@@ -1,5 +1,7 @@
-package com.hexplatoon.rivalist_backend.dto.battle;
+package com.hexplatoon.rivalist_backend.dto.battle.websocket;
 
+
+import com.hexplatoon.rivalist_backend.dto.battle.Result;
 import com.hexplatoon.rivalist_backend.entity.Battle;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,10 +12,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class BattleWebsocketResponseDto {
+public class BattleResultWebsocketDto {
     private Long battleId;
-    private String challengerUsername;
-    private String opponentUsername;
+    private Result result;
     private Battle.Category category;
-    private String message;
 }

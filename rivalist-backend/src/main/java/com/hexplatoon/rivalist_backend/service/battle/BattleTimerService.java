@@ -1,12 +1,12 @@
-package com.hexplatoon.rivalist_backend.service;
+package com.hexplatoon.rivalist_backend.service.battle;
 
-import com.hexplatoon.rivalist_backend.dto.battle.Readiness;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.*;
 
 // TODO : Refine the code. It's smelling
+// TODO : Add proper exception handling for websocket and write fail safe checks in all necessary places
 @Service
 public class BattleTimerService {
 
@@ -33,9 +33,8 @@ public class BattleTimerService {
 
     public void startReadinessTimer(Long battleId, int durationSeconds) {
         if (readinessTimers.containsKey(battleId)) return;
-        System.out.println("Testing");
         ScheduledFuture<?> future = scheduler.schedule(() -> {;
-            if (!battleService.isBattleReady(battleId)){
+            if (!battleService.isBothReady(battleId)){
                 battleService.cancelBattle(battleId);
             }
             readinessTimers.remove(battleId);
@@ -44,15 +43,22 @@ public class BattleTimerService {
         readinessTimers.put(battleId, future);
     }
 
-    public void cancelTimer(Long battleId) {
+    public void cancelBattleTimer(Long battleId) {
         ScheduledFuture<?> future = battleTimers.remove(battleId);
         if (future != null) {
             future.cancel(true);
         }
     }
 
-    public void forceEnd(Long battleId) {
-        cancelTimer(battleId);
-        battleService.endBattle(battleId);
+    public void cancelReadinessTimer(Long battleId) {
+        ScheduledFuture<?> future = readinessTimers.remove(battleId);
+        if (future != null) {
+            future.cancel(true);
+        }
     }
+
+//    public void forceEndBattleTimer(Long battleId) {
+//        cancelBattleTimer(battleId);
+//        battleService.endBattle(battleId);
+//    }
 }

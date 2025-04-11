@@ -4,6 +4,7 @@ import com.hexplatoon.rivalist_backend.entity.Notification;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+
 @Data
 public class NotificationDto {
     private Long id;

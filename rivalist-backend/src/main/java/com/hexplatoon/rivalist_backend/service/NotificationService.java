@@ -39,7 +39,7 @@ public class NotificationService {
         // Send real-time notification via WebSocket
         messagingTemplate.convertAndSendToUser(
                 recipientUsername,
-            "/queue/notifications",
+            "/topic/notifications",
             dto
         );
     }

@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChallengeRequestDto {
-    private Long id;
+public class ChallengeDto {
+    private Long challengeId;
     private String senderUsername;
     private String recipientUsername;
     private ChallengeStatus status;

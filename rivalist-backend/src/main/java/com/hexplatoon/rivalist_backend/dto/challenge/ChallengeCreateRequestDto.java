@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChallengeCreateDto {
+public class ChallengeCreateRequestDto {
 
     // TODO : Rename challenge create dto
     @NotBlank(message = "Username is required")
