@@ -7,6 +7,7 @@ import Signup from "./components/SignUp";
 import { AuthProvider } from "./components/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Toaster } from 'sonner';
+// import BattleCards from "./components/BattleCards";
 
 function App() {
   return (
