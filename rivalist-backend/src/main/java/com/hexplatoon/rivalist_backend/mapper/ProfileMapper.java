@@ -19,6 +19,7 @@ public class ProfileMapper {
                 .codeforcesRating(user.getCodeforcesRating())
                 .cssDesignRating(user.getCssDesignRating())
                 .codeforcesRating(user.getCodeforcesRating())
+                .status(user.getStatus())
                 .build();
         return dto;
     }
