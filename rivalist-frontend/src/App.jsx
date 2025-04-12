@@ -5,7 +5,8 @@ import LandingPage from "./components/pages/LandingPage";
 import Signup from "./components/SignUp";
 import { AuthProvider, useAuth } from "./components/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { Toaster } from "sonner";
+import { Toaster } from 'sonner';
+import FriendsPage from "./components/FriendsPage";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -26,7 +27,7 @@ function AppContent() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<Signup />} />
         <Route element={<ProtectedRoute />}>
-          {/* <Route path="/test" element={<TestingPage />} /> */}
+        <Route path="/friends" element={<FriendsPage />} />
         </Route>
       </Routes>
     </>

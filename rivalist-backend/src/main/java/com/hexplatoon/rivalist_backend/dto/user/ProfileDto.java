@@ -1,5 +1,6 @@
 package com.hexplatoon.rivalist_backend.dto.user;
 
+import com.hexplatoon.rivalist_backend.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,5 +27,6 @@ public class ProfileDto {
     private Integer typingRating;
     private Integer cssDesignRating;
     private Integer codeforcesRating;
+    private User.UserStatus status;
 }
 
