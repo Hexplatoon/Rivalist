@@ -22,7 +22,6 @@ import java.util.List;
 public class UserStatusService {
     private final UserRepository userRepository;
     private final FriendService friendService;
-    private final SimpMessagingTemplate messagingTemplate;
     private final NotificationService notificationService;
 
     /**
