@@ -1,4 +1,3 @@
-// Navbar.jsx
 "use client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,11 +6,16 @@ import { useAuth } from "./AuthContext";
 import { useState } from "react";
 import LoginPage from "./LoginPage";
 import SignUP from "./SignUP";
+import NotificationPopup from "./NotificationPopup";
 
 export default function Navbar() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [showFriendPanel, setShowFriendPanel] = useState(false);
   const { user, logout } = useAuth();
+  
+  // Initialize with empty notifications array
+  const [notifications, setNotifications] = useState([]);
 
   return (
     <>
@@ -40,17 +44,24 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-white/10"
+                <NotificationPopup 
+                  notifications={notifications} 
+                  setNotifications={setNotifications}
                 >
-                  <Bell className="h-5 w-5" />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/10 relative"
+                  >
+                    <Bell className="h-5 w-5" />
+                  </Button>
+                </NotificationPopup>
+
                 <Button
                   variant="ghost"
                   size="icon"
                   className="text-white hover:bg-white/10"
+                  onClick={() => setShowFriendPanel(true)}
                 >
                   <Users className="h-5 w-5" />
                 </Button>
