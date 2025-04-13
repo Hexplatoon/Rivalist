@@ -22,7 +22,7 @@ export default function Navbar() {
       <header className="fixed top-0 w-full z-50 backdrop-blur-md bg-black/30 border-b border-white/10 shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-2">
           <Link to="/" className="text-xl font-bold tracking-tight text-white">
-            Rivalist
+            {user?user:"Rivalist"}
           </Link>
 
           <div className="flex items-center space-x-4">
