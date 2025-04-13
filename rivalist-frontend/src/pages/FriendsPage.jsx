@@ -1,16 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-import { Search, UserPlus, Check, X, Users, Clock, RefreshCw } from 'lucide-react';
+import { Search, UserPlus, Check, X, Users, Clock, RefreshCw, UserMinus } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useAuth } from './AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from '../utils/AuthContext';
 
 export default function FriendsPage() {
   const [friends, setFriends] = useState([]);
@@ -20,11 +30,12 @@ export default function FriendsPage() {
   const [isAddFriendDialogOpen, setIsAddFriendDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [notification, setNotification] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [removeFriendUsername, setRemoveFriendUsername] = useState(null);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const { user, token } = useAuth();
   const stompClient = useRef(null);
 
-  // Fetch friends and pending requests
   const fetchFriends = async () => {
     try {
       setIsLoading(true);
@@ -60,33 +71,33 @@ export default function FriendsPage() {
     }
   };
 
-  // Initialize data
   useEffect(() => {
     fetchFriends();
     fetchPendingRequests();
 
-    // Setup STOMP client
     const setupWebSocketConnection = () => {
       const client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
         connectHeaders: {
           'Authorization': `Bearer ${token}`
         },
-        debug: function (str) {
-          console.log(str);
-        },
+        debug: (str) => console.log(str),
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
       });
 
       client.onConnect = () => {
-        client.subscribe('/user/topic/notifications', message => {
+        // We still subscribe to status updates to keep the UI in sync
+        client.subscribe('/user/topic/user/status', message => {
           try {
             const data = JSON.parse(message.body);
-            if (data.senderUsername) {
-              handleStatusUpdate(data.senderUsername);
-            }
+            // Update the friend's status without showing a notification
+            setFriends(prevFriends =>
+              prevFriends.map(friend =>
+                friend.username === data.username ? { ...friend, status: data.status } : friend
+              )
+            );
           } catch (err) {
             console.error('Error parsing status update:', err);
           }
@@ -103,7 +114,6 @@ export default function FriendsPage() {
 
     setupWebSocketConnection();
 
-    // Cleanup on unmount
     return () => {
       if (stompClient.current) {
         stompClient.current.deactivate();
@@ -111,22 +121,6 @@ export default function FriendsPage() {
     };
   }, [token]);
 
-  // Handle status update notification
-  const handleStatusUpdate = (username) => {
-    setFriends(prevFriends =>
-      prevFriends.map(friend => {
-        if (friend.username === username) {
-          return { ...friend, isOnline: true };
-        }
-        return friend;
-      })
-    );
-
-    setNotification(`${username} is now online`);
-    setTimeout(() => setNotification(null), 3000);
-  };
-
-  // Handle friend request actions
   const handleAcceptRequest = async (username) => {
     try {
       const response = await fetch(`http://localhost:8081/api/friends/request/${username}/accept`, {
@@ -137,8 +131,7 @@ export default function FriendsPage() {
       });
 
       if (!response.ok) throw new Error('Failed to accept request');
-
-      setNotification(`Friend request from ${username} accepted!`);
+      
       fetchFriends();
       fetchPendingRequests();
     } catch (err) {
@@ -157,8 +150,7 @@ export default function FriendsPage() {
       });
 
       if (!response.ok) throw new Error('Failed to decline request');
-
-      setNotification(`Friend request from ${username} declined`);
+      
       fetchPendingRequests();
     } catch (err) {
       setError('Error declining friend request. Please try again.');
@@ -181,7 +173,6 @@ export default function FriendsPage() {
 
       if (!response.ok) throw new Error('Failed to send friend request');
 
-      setNotification(`Friend request sent to ${newFriendUsername}!`);
       setNewFriendUsername('');
       setIsAddFriendDialogOpen(false);
     } catch (err) {
@@ -190,34 +181,51 @@ export default function FriendsPage() {
     }
   };
 
-  // Filter friends based on search query
+  const handleRemoveFriend = async () => {
+    if (!removeFriendUsername) return;
+
+    try {
+      const response = await fetch(`http://localhost:8081/api/friends/${removeFriendUsername}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to remove friend');
+      
+      // Update the local state by filtering out the removed friend
+      setFriends(prevFriends => prevFriends.filter(friend => friend.username !== removeFriendUsername));
+      setIsRemoveDialogOpen(false);
+      setRemoveFriendUsername(null);
+    } catch (err) {
+      setError('Error removing friend. Please try again.');
+      console.error(err);
+    }
+  };
+
+  const openRemoveDialog = (username) => {
+    setRemoveFriendUsername(username);
+    setIsRemoveDialogOpen(true);
+  };
+
   const filteredFriends = friends.filter(friend => {
     const fullName = `${friend.firstName} ${friend.lastName}`.toLowerCase();
     const username = friend.username.toLowerCase();
     const query = searchQuery.toLowerCase();
-
-    return fullName.includes(query) || username.includes(query);
+    const matchesSearch = fullName.includes(query) || username.includes(query);
+    
+    if (statusFilter === "all") {
+      return matchesSearch;
+    } else {
+      return matchesSearch && friend.status === statusFilter.toUpperCase();
+    }
   });
-
-  // Separate online and offline friends
-  const onlineFriends = filteredFriends.filter(friend => friend.status == "ONLINE");
-  const offlineFriends = filteredFriends.filter(friend => friend.status == "OFFLINE");
-
-  console.log(friends);
 
   return (
     <div className="container mx-auto py-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mt-10 mb-6">Friends</h1>
+      <h1 className="text-3xl font-bold mt-14 mb-6">Friends</h1>
 
-      {/* Notification */}
-      {notification && (
-        <Alert className="mb-4 bg-green-50">
-          <AlertTitle>Notification</AlertTitle>
-          <AlertDescription>{notification}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Error message */}
       {error && (
         <Alert className="mb-4 bg-red-50" variant="destructive">
           <AlertTitle>Error</AlertTitle>
@@ -225,7 +233,6 @@ export default function FriendsPage() {
         </Alert>
       )}
 
-      {/* Main tabs */}
       <Tabs defaultValue="friends">
         <div className="flex justify-between items-center mb-4">
           <TabsList>
@@ -243,14 +250,10 @@ export default function FriendsPage() {
           </TabsList>
 
           <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                fetchFriends();
-                fetchPendingRequests();
-              }}
-            >
+            <Button variant="outline" size="sm" onClick={() => {
+              fetchFriends();
+              fetchPendingRequests();
+            }}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </Button>
@@ -265,9 +268,7 @@ export default function FriendsPage() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Friend</DialogTitle>
-                  <DialogDescription>
-                    Enter the username of the person you want to add as a friend.
-                  </DialogDescription>
+                  <DialogDescription>Enter the username of the person you want to add as a friend.</DialogDescription>
                 </DialogHeader>
                 <Input
                   placeholder="Username"
@@ -275,21 +276,16 @@ export default function FriendsPage() {
                   onChange={(e) => setNewFriendUsername(e.target.value)}
                 />
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddFriendDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSendFriendRequest}>
-                    Send Request
-                  </Button>
+                  <Button variant="outline" onClick={() => setIsAddFriendDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSendFriendRequest}>Send Request</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
         </div>
 
-        {/* Friends tab content */}
         <TabsContent value="friends">
-          <div className="flex mb-4 dark">
+          <div className="flex gap-2 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -299,6 +295,17 @@ export default function FriendsPage() {
                 className="pl-9"
               />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Friends</SelectItem>
+                <SelectItem value="online">Online</SelectItem>
+                <SelectItem value="in-battle">In Battle</SelectItem>
+                <SelectItem value="offline">Offline</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {isLoading ? (
@@ -306,47 +313,26 @@ export default function FriendsPage() {
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
             </div>
           ) : (
-            <div>
-              {/* Online Friends */}
-              <div className="mb-8">
-                <h2 className="text-lg font-semibold mb-3 flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                  Online ({onlineFriends.length})
-                </h2>
-
-                {onlineFriends.length === 0 ? (
-                  <p className="text-gray-500 italic">No online friends</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {onlineFriends.map(friend => (
-                      <FriendCard key={friend.id} friend={friend} isOnline={true} />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Offline Friends */}
-              <div>
-                <h2 className="text-lg font-semibold mb-3 flex items-center">
-                  <div className="w-3 h-3 bg-gray-300 rounded-full mr-2"></div>
-                  Offline ({offlineFriends.length})
-                </h2>
-
-                {offlineFriends.length === 0 ? (
-                  <p className="text-gray-500 italic">No offline friends</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {offlineFriends.map(friend => (
-                      <FriendCard key={friend.id} friend={friend} isOnline={false} />
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div className="border rounded-md">
+              {filteredFriends.length === 0 ? (
+                <div className="py-10 text-center">
+                  <p className="text-gray-500">No friends found</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredFriends.map(friend => (
+                    <FriendListItem 
+                      key={friend.id} 
+                      friend={friend} 
+                      onRemove={() => openRemoveDialog(friend.username)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </TabsContent>
 
-        {/* Pending tab content */}
         <TabsContent value="pending">
           {pendingRequests.length === 0 ? (
             <div className="text-center py-10">
@@ -354,80 +340,85 @@ export default function FriendsPage() {
               <p className="text-gray-500 mt-2">When someone sends you a friend request, it will appear here.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border rounded-md divide-y">
               {pendingRequests.map(request => (
-                <Card key={request.id} className="relative">
-                  <CardHeader>
-                    <div className="flex items-center space-x-4">
-                      <Avatar>
-                        <AvatarFallback>
-                          {request.firstName?.charAt(0)}{request.lastName?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-lg">
-                          {request.firstName} {request.lastName}
-                        </CardTitle>
-                        <CardDescription>@{request.username}</CardDescription>
-                      </div>
+                <div key={request.id} className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarFallback>{request.firstName?.[0]}{request.lastName?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{request.firstName} {request.lastName}</p>
+                      <p className="text-sm text-gray-500">@{request.username}</p>
                     </div>
-                  </CardHeader>
-                  <CardFooter className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeclineRequest(request.username)}
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Decline
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleDeclineRequest(request.username)}>
+                      <X className="w-4 h-4 mr-1" /> Decline
                     </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleAcceptRequest(request.username)}
-                    >
-                      <Check className="w-4 h-4 mr-1" />
-                      Accept
+                    <Button size="sm" onClick={() => handleAcceptRequest(request.username)}>
+                      <Check className="w-4 h-4 mr-1" /> Accept
                     </Button>
-                  </CardFooter>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Remove Friend Confirmation Dialog */}
+      <AlertDialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Friend</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this friend? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setRemoveFriendUsername(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveFriend}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-// Friend Card Component
-function FriendCard({ friend, isOnline }) {
+function FriendListItem({ friend, onRemove }) {
+  const statusColor = {
+    'ONLINE': 'bg-green-500',
+    'OFFLINE': 'bg-gray-300',
+    'IN-BATTLE': 'bg-yellow-500',
+  }[friend.status] || 'bg-gray-300';
+
+  const statusText = {
+    'ONLINE': 'Online',
+    'OFFLINE': 'Offline',
+    'IN-BATTLE': 'In Battle',
+  }[friend.status] || 'Unknown';
+
   return (
-    <Card className="relative">
-      <CardHeader>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Avatar>
-              <AvatarFallback>
-                {friend.firstName?.charAt(0)}{friend.lastName?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            {isOnline && (
-              <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white"></span>
-            )}
-          </div>
-          <div>
-            <CardTitle className="text-lg">
-              {friend.firstName} {friend.lastName}
-            </CardTitle>
-            <CardDescription>@{friend.username}</CardDescription>
+    <div className="flex items-center justify-between p-4 hover:bg-neutral-900">
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <Avatar>
+            <AvatarFallback>{friend.firstName?.[0]}{friend.lastName?.[0]}</AvatarFallback>
+          </Avatar>
+          <span className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full ${statusColor} ring-2 ring-white`} />
+        </div>
+        <div>
+          <p className="font-medium">{friend.firstName} {friend.lastName}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-gray-500">@{friend.username}</p>
+            <span className="text-xs text-gray-400">• {statusText}</span>
           </div>
         </div>
-      </CardHeader>
-      <CardFooter className="flex justify-end">
-        <Button variant="outline" size="sm">
-          Message
-        </Button>
-      </CardFooter>
-    </Card>
+      </div>
+      <Button variant="outline" size="sm" onClick={onRemove}>
+        <UserMinus className="w-4 h-4 mr-1" /> Remove
+      </Button>
+    </div>
   );
 }

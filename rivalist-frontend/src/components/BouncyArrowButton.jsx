@@ -1,20 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils"; // if you use className merging utility
+import { cn } from "@/lib/utils";
 import React from "react";
 
 export default function BouncyArrowButton({ onClick, className }) {
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={onClick}
-      className={cn(
-        "w-12 h-12 rounded-full bg-white/10 text-white hover:bg-white/20 animate-bounce-slow",
-        className
-      )}
-    >
-      <ChevronDown className="h-6 w-6" />
-    </Button>
+    <div className="flex items-center justify-center w-full h-full">
+      <Button
+        variant="ghost"
+        onClick={onClick}
+        className={cn(
+          "w-44 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 animate-bounce-slow text-xl font-semibold gap-3 flex items-center justify-center",
+          className
+        )}
+      >
+        <span>Get Started</span>
+        <ChevronDown className="h-8 w-8" />
+      </Button>
+    </div>
   );
 }

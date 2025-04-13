@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../utils/AuthContext";
 import SockJS from "sockjs-client";
 import * as Stomp from "stompjs";
 
