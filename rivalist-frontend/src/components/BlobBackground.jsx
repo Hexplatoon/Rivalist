@@ -6,30 +6,30 @@ import AsciiEffect from "./AsciiEffect";
 
 function BlobBackground() {
   return (
-    <div className="absolute inset-0">
+    <div className="fixed inset-0 w-full h-full">
       <Canvas camera={{ position: [0, 0, 8] }}>
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={0.1} />
         <pointLight position={[10, 10, 10]} />
 
-        {/* Bottom-left corner */}
+        {/* Top blobs */}
         <AsciiBlob
           position={[-9, 4, 0]}
           color="#ff4477"
           emissiveColor="#440022"
         />
-
-        {/* Top-right corner */}
         <AsciiBlob
           position={[9, 4, 0]}
           color="#44ddff"
           emissiveColor="#002244"
         />
 
+        {/* Bottom blob - positioned to be visible in battle page */}
         <AsciiBlob
           position={[0, -6.5, 0]}
           color="#44ddff"
           emissiveColor="#002244"
         />
+
         <AsciiEffect />
         <OrbitControls
           enableZoom={false}

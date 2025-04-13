@@ -118,3 +118,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+@font-face {
+  font-family: "Bebas Neue";
+  src: url(https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap);
+}
+
+.outlined-text {
+  -webkit-text-stroke: .8px white;
+}
+
+.logo {
+  -webkit-animation: flicker 2s infinite;
+  text-align:center;
+}
+
+@-webkit-keyframes flicker
+{
+0% {opacity:0;}
+9% {opacity:0;}
+10% {opacity:.5;}
+13% {opacity:0;}
+20% {opacity:.5;}
+25% {opacity:1;}
+}
