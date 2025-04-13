@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../utils/AuthContext";
 import SockJS from "sockjs-client";
 import * as Stomp from "stompjs";
+import { cn } from "@/lib/utils";
 
 export default function NotificationPopup({
   children,
@@ -104,16 +105,24 @@ export default function NotificationPopup({
   const addNotification = (notification) => {
     console.log("Adding New Notification:", notification);
     setNotifications((prev) => {
-      const newNotifications = [
-        ...prev,
-        {
-          ...notification,
-          read: false,
-          time: new Date().toLocaleTimeString(),
-        },
-      ];
-      console.log("Updated Notifications:", newNotifications);
-      return newNotifications;
+      // Check for existing notification with same ID
+      const exists = prev.some((n) => n.id === notification.id);
+
+      if (!exists) {
+        const newNotifications = [
+          ...prev,
+          {
+            ...notification,
+            read: false,
+            time: new Date().toLocaleTimeString(),
+          },
+        ];
+        console.log("Updated Notifications:", newNotifications);
+        return newNotifications;
+      }
+
+      console.log("Duplicate notification skipped:", notification.id);
+      return prev;
     });
   };
 
@@ -234,13 +243,16 @@ export default function NotificationPopup({
         <div className="relative">
           {children}
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500">
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0"
+            >
               {unreadCount}
             </Badge>
           )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 bg-white" align="end" sideOffset={5}>
+      <PopoverContent className="w-80 p-0" align="end" sideOffset={5}>
         <div className="flex items-center justify-between p-4 border-b">
           <h4 className="font-medium">Notifications</h4>
           {unreadCount > 0 && (
@@ -254,9 +266,9 @@ export default function NotificationPopup({
             </Button>
           )}
         </div>
-        <ScrollArea className="h-96">
+        <ScrollArea className="h-[400px]">
           {notifications.length === 0 ? (
-            <div className="text-center text-gray-500 p-4">
+            <div className="text-center p-4 text-muted-foreground">
               No notifications
             </div>
           ) : (
@@ -267,26 +279,26 @@ export default function NotificationPopup({
                 return (
                   <div
                     key={notification.id}
-                    className={`px-4 py-3 border-b last:border-b-0 ${
-                      !notification.read ? "bg-gray-50" : ""
-                    }`}
+                    className={cn(
+                      "px-4 py-3 border-b last:border-b-0",
+                      !notification.read && "bg-muted/50"
+                    )}
                   >
                     <div className="flex justify-between items-start mb-1">
                       <AlertTitle className="text-sm font-medium">
                         {title}
                       </AlertTitle>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {notification.time}
                       </span>
                     </div>
-                    <AlertDescription className="text-xs text-gray-600 mb-2">
+                    <AlertDescription className="text-xs text-muted-foreground mb-2">
                       {description}
                     </AlertDescription>
                     {action && (
                       <div className="flex space-x-2 mt-2">
                         <Button
                           size="sm"
-                          variant="default"
                           className="h-8 text-xs flex-1"
                           onClick={() => handleAccept(notification.id)}
                         >
