@@ -4,16 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Bell, UserCircle, Users, LogOut } from "lucide-react";
 import { useAuth } from "../utils/AuthContext";
 import { useState } from "react";
+import { useModal } from "../utils/ModalContext";
 import LoginPage from "./LoginPage";
 import SignUP from "./SignUP";
 import NotificationPopup from "./NotificationPopup";
 
 export default function Navbar() {
   const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
-  const [showFriendPanel, setShowFriendPanel] = useState(false);
+  const [showSignup, setShowSignup] = useState(false); 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { isModalOpen } = useModal();
 
   const handlefriendOnclick = (e) =>{
     console.log("friends clicked");
@@ -24,6 +25,9 @@ export default function Navbar() {
   
   // Initialize with empty notifications array
   const [notifications, setNotifications] = useState([]);
+
+  // Don't render the navbar if any modal is open
+  if (isModalOpen) return null;
 
   return (
     <>
@@ -39,13 +43,17 @@ export default function Navbar() {
                 <Button
                   variant="outline"
                   className="border-white/10 text-white hover:bg-white/40 hover:text-black"
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => {
+                    setShowLogin(true);
+                  }}
                 >
                   Login
                 </Button>
                 <Button
                   className="bg-white/10 text-white hover:bg-white/20"
-                  onClick={() => setShowSignup(true)}
+                  onClick={() => {
+                    setShowSignup(true);
+                  }}
                 >
                   Sign Up
                 </Button>

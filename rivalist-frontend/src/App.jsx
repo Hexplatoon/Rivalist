@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "./utils/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Toaster } from 'sonner';
 import FriendsPage from "./pages/FriendsPage";
+import { ModalProvider } from "./utils/ModalContext";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -37,7 +38,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
+      <ModalProvider>
       <AppContent />
+      </ModalProvider>
     </AuthProvider>
   );
 }
