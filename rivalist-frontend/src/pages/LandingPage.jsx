@@ -2,6 +2,7 @@ import React from 'react'
 import BlobBackground from "../components/BlobBackground";
 import  { useRef } from "react";
 import BouncyArrowButton from '../components/BouncyArrowButton';
+import BattleCards from '../BattleCards';
 
 function LandingPage() {
     const contentRef = useRef();
@@ -26,13 +27,7 @@ function LandingPage() {
         </div>
       </section>
 
-      <section ref={contentRef} className="min-h-screen bg-white p-20">
-        <h2 className="text-4xl font-bold mb-8">Content Section</h2>
-        <p className="text-lg">
-          Your content goes here. This is where users will land after clicking
-          the "Get Started" button.
-        </p>
-      </section>
+      <BattleCards/>
       </>
 }
 
