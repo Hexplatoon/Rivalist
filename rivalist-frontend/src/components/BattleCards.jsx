@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Keyboard, Palette, Code } from "lucide-react";
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/utils/AuthContext';
 import FriendChallenge from './FriendChallenge';
 import LoginPopup from './LoginPage';
 
@@ -11,7 +11,7 @@ export default function BattlePage() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-black pt-40 pb-32 relative">
+    <div className="min-h-screen pt-40 pb-32 relative">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto">
         {/* Typing Battle Card */}
         <Card className="group bg-gray-900 p-8 rounded-xl transition-all duration-500 hover:duration-300 min-h-[400px] flex flex-col 
