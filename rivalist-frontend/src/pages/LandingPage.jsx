@@ -1,7 +1,7 @@
 import React from 'react'
-import BlobBackground from "../BlobBackground";
+import BlobBackground from "../components/BlobBackground";
 import  { useRef } from "react";
-import BouncyArrowButton from '../BouncyArrowButton';
+import BouncyArrowButton from '../components/BouncyArrowButton';
 
 function LandingPage() {
     const contentRef = useRef();

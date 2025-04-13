@@ -23,6 +23,7 @@ public class UserStatusService {
     private final UserRepository userRepository;
     private final FriendService friendService;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     /**
      * Updates a user's status and notifies their friends.
@@ -96,19 +97,19 @@ public class UserStatusService {
         UserStatusDto statusUpdate = UserStatusDto.fromUser(user);
         // TODO : change the subscription channel path
         for (ProfileDto friend : friends) {
-//            messagingTemplate.convertAndSendToUser(
-//                friend.getUsername(),
-//                "/topic/user.status",
-//                statusUpdate
-//            );
+            simpMessagingTemplate.convertAndSendToUser(
+                friend.getUsername(),
+                "/topic/user/status",
+                statusUpdate
+            );
 
             // send notification instead of online status update
-            notificationService.createNotification(
-                    friend.getUsername(),
-                    user.getUsername(),
-                    "user_status",
-                    user.getUsername() + " is " + user.getStatus().name()
-            );
+//            notificationService.createNotification(
+//                    friend.getUsername(),
+//                    user.getUsername(),
+//                    "user_status",
+//                    user.getUsername() + " is " + user.getStatus().name()
+//            );
         }
     }
 }

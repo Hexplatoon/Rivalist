@@ -1,8 +1,8 @@
 "use client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Bell, UserCircle, Users, LogOut } from "lucide-react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../utils/AuthContext";
 import { useState } from "react";
 import LoginPage from "./LoginPage";
 import SignUP from "./SignUP";
@@ -13,6 +13,14 @@ export default function Navbar() {
   const [showSignup, setShowSignup] = useState(false);
   const [showFriendPanel, setShowFriendPanel] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handlefriendOnclick = (e) =>{
+    console.log("friends clicked");
+    
+    e.preventDefault();
+    navigate('/friends');
+  }
   
   // Initialize with empty notifications array
   const [notifications, setNotifications] = useState([]);
@@ -61,7 +69,7 @@ export default function Navbar() {
                   variant="ghost"
                   size="icon"
                   className="text-white hover:bg-white/10"
-                  onClick={() => setShowFriendPanel(true)}
+                  onClick={handlefriendOnclick}
                 >
                   <Users className="h-5 w-5" />
                 </Button>

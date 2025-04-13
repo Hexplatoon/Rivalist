@@ -2,7 +2,7 @@
 "use client";
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../utils/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
