@@ -9,7 +9,7 @@ import LoginPopup from './LoginPage';
 
 export default function BattlePage() {
   const [selectedBattle, setSelectedBattle] = useState(null);
-  const { user } = useAuth();
+  const { user, friends } = useAuth();
   const { openModal, closeModal } = useModal();
 
   // Control modal visibility through the context
@@ -20,6 +20,10 @@ export default function BattlePage() {
       closeModal();
     }
   }, [selectedBattle, openModal, closeModal]);
+
+  if (user) {
+    console.log(friends)
+  }
 
   return (
     <div className="min-h-screen pt-40 pb-32 relative">
@@ -36,7 +40,7 @@ export default function BattlePage() {
               Test your typing speed against other developers. Race against time
               and compete for the top spot in the leaderboard!
             </p>
-            <button 
+            <button
               onClick={() => setSelectedBattle('typing')}
               className="mt-6 px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium text-lg transition-all
                          group-hover:scale-105 group-hover:shadow-md group-hover:shadow-purple-500/50"
@@ -58,7 +62,7 @@ export default function BattlePage() {
               Show off your CSS skills! Replicate complex designs with minimal
               code and compete for the most efficient solutions.
             </p>
-            <button 
+            <button
               onClick={() => setSelectedBattle('css')}
               className="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium text-lg transition-all
                          group-hover:scale-105 group-hover:shadow-md group-hover:shadow-blue-500/50"
@@ -80,7 +84,7 @@ export default function BattlePage() {
               Solve algorithmic challenges head-to-head against other
               programmers. Speed and efficiency will decide the winner!
             </p>
-            <button 
+            <button
               onClick={() => setSelectedBattle('coding')}
               className="mt-6 px-8 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-medium text-lg transition-all
                          group-hover:scale-105 group-hover:shadow-md group-hover:shadow-green-500/50"
@@ -103,12 +107,12 @@ export default function BattlePage() {
           {/* Centered modal */}
           <div className="fixed inset-0 flex items-center justify-center p-4">
             {user ? (
-              <FriendChallenge 
+              <FriendChallenge
                 battleType={selectedBattle}
                 onClose={() => setSelectedBattle(null)}
               />
             ) : (
-              <LoginPopup 
+              <LoginPopup
                 onClose={() => setSelectedBattle(null)}
                 onLoginSuccess={() => setSelectedBattle(selectedBattle)}
               />

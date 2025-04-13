@@ -20,7 +20,7 @@ export default function NotificationPopup({
   setNotifications,
 }) {
   const [open, setOpen] = useState(false);
-  const { user, token } = useAuth();
+  const { user, token, fetchFriends } = useAuth();
 
   console.log("NotificationPopup Render:", { user, notifications, open });
 
@@ -103,11 +103,8 @@ export default function NotificationPopup({
   }, [token]);
 
   const addNotification = (notification) => {
-    console.log("Adding New Notification:", notification);
     setNotifications((prev) => {
-      // Check for existing notification with same ID
       const exists = prev.some((n) => n.id === notification.id);
-
       if (!exists) {
         const newNotifications = [
           ...prev,
@@ -120,8 +117,6 @@ export default function NotificationPopup({
         console.log("Updated Notifications:", newNotifications);
         return newNotifications;
       }
-
-      console.log("Duplicate notification skipped:", notification.id);
       return prev;
     });
   };
@@ -158,7 +153,9 @@ export default function NotificationPopup({
             },
           }
         );
-        console.log("Friend Request Accept Response:", response.status);
+
+        // Refresh friends list in global state
+        await fetchFriends();
       }
 
       setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -187,8 +184,24 @@ export default function NotificationPopup({
             },
           }
         );
-        console.log("Challenge Decline Response:", response.status);
+      } else if (notification.type === "friend_request") {
+        console.log("Declining Friend Request from:", notification.from);
+        const response = await fetch(
+          `http://localhost:8081/api/friends/request/${notification.from}/decline`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
+        if (!response.ok) throw new Error('Failed to decline request');
+
+        // Optionally refresh friends list if needed
+        await fetchFriends();
       }
+
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     } catch (error) {
       console.error("Error declining notification:", error);
@@ -201,12 +214,6 @@ export default function NotificationPopup({
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-
-  console.log("Current Notifications State:", {
-    total: notifications.length,
-    unread: unreadCount,
-    notifications,
-  });
 
   const getNotificationContent = (notification) => {
     switch (notification.type) {
@@ -252,74 +259,81 @@ export default function NotificationPopup({
           )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end" sideOffset={5}>
-        <div className="flex items-center justify-between p-4 border-b">
-          <h4 className="font-medium">Notifications</h4>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs"
-              onClick={markAllAsRead}
-            >
-              Mark all as read
-            </Button>
-          )}
-        </div>
-        <ScrollArea className="h-[400px]">
-          {notifications.length === 0 ? (
-            <div className="text-center p-4 text-muted-foreground">
-              No notifications
-            </div>
-          ) : (
-            <div className="py-2">
-              {notifications.map((notification) => {
-                const { title, description, action } =
-                  getNotificationContent(notification);
-                return (
-                  <div
-                    key={notification.id}
-                    className={cn(
-                      "px-4 py-3 border-b last:border-b-0",
-                      !notification.read && "bg-muted/50"
-                    )}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <AlertTitle className="text-sm font-medium">
-                        {title}
-                      </AlertTitle>
-                      <span className="text-xs text-muted-foreground">
-                        {notification.time}
-                      </span>
-                    </div>
-                    <AlertDescription className="text-xs text-muted-foreground mb-2">
-                      {description}
-                    </AlertDescription>
-                    {action && (
-                      <div className="flex space-x-2 mt-2">
-                        <Button
-                          size="sm"
-                          className="h-8 text-xs flex-1"
-                          onClick={() => handleAccept(notification.id)}
-                        >
-                          <Check className="h-3 w-3 mr-1" /> Accept
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 text-xs flex-1"
-                          onClick={() => handleDecline(notification.id)}
-                        >
-                          <X className="h-3 w-3 mr-1" /> Decline
-                        </Button>
+      <PopoverContent
+        className="w-80 p-0"
+        align="end"
+        sideOffset={5}
+      >
+        <div className="flex flex-col max-h-[400px]">
+          <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-popover z-10">
+            <h4 className="font-medium">Notifications</h4>
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={markAllAsRead}
+              >
+                Mark all as read
+              </Button>
+            )}
+          </div>
+
+          <ScrollArea className="h-[350px]">
+            {notifications.length === 0 ? (
+              <div className="text-center p-4 text-muted-foreground">
+                No notifications
+              </div>
+            ) : (
+              <div className="py-2">
+                {notifications.map((notification) => {
+                  const { title, description, action } =
+                    getNotificationContent(notification);
+                  return (
+                    <div
+                      key={notification.id}
+                      className={cn(
+                        "px-4 py-3 border-b last:border-b-0",
+                        !notification.read && "bg-muted/50"
+                      )}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <AlertTitle className="text-sm font-medium">
+                          {title}
+                        </AlertTitle>
+                        <span className="text-xs text-muted-foreground">
+                          {notification.time}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </ScrollArea>
+                      <AlertDescription className="text-xs text-muted-foreground mb-2">
+                        {description}
+                      </AlertDescription>
+                      {action && (
+                        <div className="flex space-x-2 mt-2">
+                          <Button
+                            size="sm"
+                            className="h-8 text-xs flex-1"
+                            onClick={() => handleAccept(notification.id)}
+                          >
+                            <Check className="h-3 w-3 mr-1" /> Accept
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs flex-1"
+                            onClick={() => handleDecline(notification.id)}
+                          >
+                            <X className="h-3 w-3 mr-1" /> Decline
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );

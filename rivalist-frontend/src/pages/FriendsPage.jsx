@@ -23,58 +23,27 @@ import {
 import { useAuth } from '../utils/AuthContext';
 
 export default function FriendsPage() {
-  const [friends, setFriends] = useState([]);
-  const [pendingRequests, setPendingRequests] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [newFriendUsername, setNewFriendUsername] = useState('');
   const [isAddFriendDialogOpen, setIsAddFriendDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [removeFriendUsername, setRemoveFriendUsername] = useState(null);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
-  const { user, token } = useAuth();
+  const [error, setError] = useState(null);
+  
+  const { 
+    user, 
+    token, 
+    friends, 
+    pendingRequests, 
+    fetchFriends, 
+    fetchPendingRequests,
+    loading 
+  } = useAuth();
+
   const stompClient = useRef(null);
 
-  const fetchFriends = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('http://localhost:8081/api/friends', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch friends');
-      const data = await response.json();
-      setFriends(data);
-      setError(null);
-    } catch (err) {
-      setError('Error fetching friends. Please try again.');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchPendingRequests = async () => {
-    try {
-      const response = await fetch('http://localhost:8081/api/friends/pending', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch pending requests');
-      const data = await response.json();
-      setPendingRequests(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
-    fetchFriends();
-    fetchPendingRequests();
-
     const setupWebSocketConnection = () => {
       const client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
@@ -88,16 +57,10 @@ export default function FriendsPage() {
       });
 
       client.onConnect = () => {
-        // We still subscribe to status updates to keep the UI in sync
         client.subscribe('/user/topic/user/status', message => {
           try {
             const data = JSON.parse(message.body);
-            // Update the friend's status without showing a notification
-            setFriends(prevFriends =>
-              prevFriends.map(friend =>
-                friend.username === data.username ? { ...friend, status: data.status } : friend
-              )
-            );
+            fetchFriends(); // Refresh friends list on status change
           } catch (err) {
             console.error('Error parsing status update:', err);
           }
@@ -112,14 +75,16 @@ export default function FriendsPage() {
       stompClient.current = client;
     };
 
-    setupWebSocketConnection();
+    if (token) {
+      setupWebSocketConnection();
+    }
 
     return () => {
       if (stompClient.current) {
         stompClient.current.deactivate();
       }
     };
-  }, [token]);
+  }, [token, fetchFriends]);
 
   const handleAcceptRequest = async (username) => {
     try {
@@ -132,8 +97,8 @@ export default function FriendsPage() {
 
       if (!response.ok) throw new Error('Failed to accept request');
       
-      fetchFriends();
-      fetchPendingRequests();
+      await fetchFriends();
+      await fetchPendingRequests();
     } catch (err) {
       setError('Error accepting friend request. Please try again.');
       console.error(err);
@@ -151,7 +116,7 @@ export default function FriendsPage() {
 
       if (!response.ok) throw new Error('Failed to decline request');
       
-      fetchPendingRequests();
+      await fetchPendingRequests();
     } catch (err) {
       setError('Error declining friend request. Please try again.');
       console.error(err);
@@ -194,8 +159,7 @@ export default function FriendsPage() {
 
       if (!response.ok) throw new Error('Failed to remove friend');
       
-      // Update the local state by filtering out the removed friend
-      setFriends(prevFriends => prevFriends.filter(friend => friend.username !== removeFriendUsername));
+      await fetchFriends();
       setIsRemoveDialogOpen(false);
       setRemoveFriendUsername(null);
     } catch (err) {
@@ -308,7 +272,7 @@ export default function FriendsPage() {
             </Select>
           </div>
 
-          {isLoading ? (
+          {loading ? (
             <div className="flex justify-center py-10">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
             </div>
@@ -367,7 +331,6 @@ export default function FriendsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Remove Friend Confirmation Dialog */}
       <AlertDialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

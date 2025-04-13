@@ -17,8 +17,6 @@ export default function Navbar() {
   const { isModalOpen } = useModal();
 
   const handlefriendOnclick = (e) =>{
-    console.log("friends clicked");
-    
     e.preventDefault();
     navigate('/friends');
   }

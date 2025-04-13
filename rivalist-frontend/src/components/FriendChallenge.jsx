@@ -5,10 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/utils/AuthContext';
 
 export default function FriendChallenge({ battleType, onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFriend, setSelectedFriend] = useState(null);
+  const { friends } = useAuth();
 
   const allFriends = [
     {
@@ -33,10 +35,11 @@ export default function FriendChallenge({ battleType, onClose }) {
       game: null
     }
   ];
+  console.log(friends);
 
-  const onlineFriends = allFriends.filter(friend =>
-    friend.status === 'online' &&
-    friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const onlineFriends = friends.filter(friend =>
+    friend.status == "ONLINE" &&
+    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -85,22 +88,22 @@ export default function FriendChallenge({ battleType, onClose }) {
             <div className="overflow-y-auto max-h-96 space-y-3">
               {onlineFriends.length > 0 ? (
                 onlineFriends.map(friend => (
-                  <div 
-                    key={friend.id} 
+                  <div
+                    key={friend.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-gray-800/30 hover:bg-gray-800/50 transition-colors border border-gray-800"
                   >
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <Avatar className="border border-gray-700">
-                          <AvatarImage src={friend.avatar} alt={friend.name} />
-                          <AvatarFallback className="bg-gray-700">{friend.name.charAt(0)}</AvatarFallback>
+                          <AvatarImage src={friend.profilePicture} alt={friend.username} />
+                          <AvatarFallback className="bg-gray-700">{friend.username.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></span>
                       </div>
                       <div>
-                        <h3 className="font-medium text-white">{friend.name}</h3>
+                        <h3 className="font-medium text-white">{friend.username}</h3>
                         <p className="text-sm text-gray-400">
-                          {friend.game ? friend.game : 'Online'}
+                          Online
                         </p>
                       </div>
                     </div>
@@ -136,7 +139,7 @@ export default function FriendChallenge({ battleType, onClose }) {
 
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-gray-100">
-              Challenge {selectedFriend.name}
+              Challenge {selectedFriend.username}
             </CardTitle>
             <p className="text-sm text-gray-400">
               Send a {battleType} battle request
@@ -146,13 +149,13 @@ export default function FriendChallenge({ battleType, onClose }) {
           <CardContent>
             <div className="flex items-center gap-3 mb-6 p-3 rounded-lg bg-gray-800/30 border border-gray-800">
               <Avatar className="border border-gray-700">
-                <AvatarImage src={selectedFriend.avatar} alt={selectedFriend.name} />
-                <AvatarFallback className="bg-gray-700">{selectedFriend.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={selectedFriend.profilePicture} alt={selectedFriend.username} />
+                <AvatarFallback className="bg-gray-700">{selectedFriend.username.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="font-medium text-white">{selectedFriend.name}</h3>
+                <h3 className="font-medium text-white">{selectedFriend.username}</h3>
                 <p className="text-sm text-gray-400">
-                  {selectedFriend.game ? selectedFriend.game : 'Online'}
+                  Online
                 </p>
               </div>
             </div>
