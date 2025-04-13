@@ -1,12 +1,12 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Nav from "./components/Navbar";
-import LandingPage from "./components/pages/LandingPage";
+import LandingPage from "./pages/LandingPage";
 import Signup from "./components/SignUp";
-import { AuthProvider, useAuth } from "./components/AuthContext";
+import { AuthProvider, useAuth } from "./utils/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Toaster } from 'sonner';
-import FriendsPage from "./components/FriendsPage";
+import FriendsPage from "./pages/FriendsPage";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -21,7 +21,7 @@ function AppContent() {
 
   return (
     <>
-      <Toaster position="top-right" richColors />
+      <Toaster position="bottom-right" richColors />
       <Nav />
       <Routes>
         <Route path="/" element={<LandingPage />} />
