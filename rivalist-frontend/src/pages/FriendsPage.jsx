@@ -1,15 +1,36 @@
-import { useState, useEffect, useRef } from 'react';
-import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs';
-import { Search, UserPlus, Check, X, Users, Clock, RefreshCw, UserMinus } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  UserPlus,
+  Check,
+  X,
+  Users,
+  Clock,
+  RefreshCw,
+  UserMinus,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +41,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAuth } from '../utils/AuthContext';
+import { useAuth } from "../utils/AuthContext";
+import { useStomp } from "@/utils/StompContext";
 
 export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,90 +57,82 @@ export default function FriendsPage() {
     user, 
     token, 
     friends, 
+    setFriends,
     pendingRequests, 
     fetchFriends, 
     fetchPendingRequests,
     loading 
   } = useAuth();
 
-  const stompClient = useRef(null);
+  const { connected, subscribeWithCleanup } = useStomp();
 
   useEffect(() => {
-    const setupWebSocketConnection = () => {
-      const client = new Client({
-        webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
-        connectHeaders: {
-          'Authorization': `Bearer ${token}`
-        },
-        debug: (str) => console.log(str),
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
-      });
+    fetchFriends();
+    fetchPendingRequests();
 
-      client.onConnect = () => {
-        client.subscribe('/user/topic/user/status', message => {
-          try {
-            const data = JSON.parse(message.body);
-            fetchFriends(); // Refresh friends list on status change
-          } catch (err) {
-            console.error('Error parsing status update:', err);
-          }
-        });
-      };
+    if (!connected) return;
 
-      client.onStompError = (frame) => {
-        console.error('STOMP error:', frame);
-      };
-
-      client.activate();
-      stompClient.current = client;
-    };
-
-    if (token) {
-      setupWebSocketConnection();
-    }
-
-    return () => {
-      if (stompClient.current) {
-        stompClient.current.deactivate();
+    const unsubscribe = subscribeWithCleanup(
+      "/user/topic/user/status",
+      (msg) => {
+        try {
+          const data = JSON.parse(msg.body);
+          // Update the friend's status without showing a notification
+          setFriends((prevFriends) =>
+            prevFriends.map((friend) =>
+              friend.username === data.username
+                ? { ...friend, status: data.status }
+                : friend
+            )
+          );
+        } catch (err) {
+          console.error("Error parsing status update:", err);
+        }
       }
-    };
-  }, [token, fetchFriends]);
+    );
+
+    return unsubscribe;
+  }, [connected]);
 
   const handleAcceptRequest = async (username) => {
     try {
-      const response = await fetch(`http://localhost:8081/api/friends/request/${username}/accept`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const response = await fetch(
+        `http://localhost:8081/api/friends/request/${username}/accept`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
 
       if (!response.ok) throw new Error('Failed to accept request');
       
       await fetchFriends();
       await fetchPendingRequests();
     } catch (err) {
-      setError('Error accepting friend request. Please try again.');
+      setError("Error accepting friend request. Please try again.");
       console.error(err);
     }
   };
 
   const handleDeclineRequest = async (username) => {
     try {
-      const response = await fetch(`http://localhost:8081/api/friends/request/${username}/decline`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const response = await fetch(
+        `http://localhost:8081/api/friends/request/${username}/decline`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
 
-      if (!response.ok) throw new Error('Failed to decline request');
+      if (!response.ok) throw new Error("Failed to decline request");
       
       await fetchPendingRequests();
     } catch (err) {
-      setError('Error declining friend request. Please try again.');
+      setError("Error declining friend request. Please try again.");
       console.error(err);
     }
   };
@@ -127,21 +141,24 @@ export default function FriendsPage() {
     if (!newFriendUsername.trim()) return;
 
     try {
-      const response = await fetch('http://localhost:8081/api/friends/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ username: newFriendUsername }),
-      });
+      const response = await fetch(
+        "http://localhost:8081/api/friends/request",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ username: newFriendUsername }),
+        }
+      );
 
-      if (!response.ok) throw new Error('Failed to send friend request');
+      if (!response.ok) throw new Error("Failed to send friend request");
 
-      setNewFriendUsername('');
+      setNewFriendUsername("");
       setIsAddFriendDialogOpen(false);
     } catch (err) {
-      setError('Error sending friend request. Please try again.');
+      setError("Error sending friend request. Please try again.");
       console.error(err);
     }
   };
@@ -150,20 +167,23 @@ export default function FriendsPage() {
     if (!removeFriendUsername) return;
 
     try {
-      const response = await fetch(`http://localhost:8081/api/friends/${removeFriendUsername}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const response = await fetch(
+        `http://localhost:8081/api/friends/${removeFriendUsername}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
 
-      if (!response.ok) throw new Error('Failed to remove friend');
+      if (!response.ok) throw new Error("Failed to remove friend");
       
       await fetchFriends();
       setIsRemoveDialogOpen(false);
       setRemoveFriendUsername(null);
     } catch (err) {
-      setError('Error removing friend. Please try again.');
+      setError("Error removing friend. Please try again.");
       console.error(err);
     }
   };
@@ -173,12 +193,12 @@ export default function FriendsPage() {
     setIsRemoveDialogOpen(true);
   };
 
-  const filteredFriends = friends.filter(friend => {
+  const filteredFriends = friends.filter((friend) => {
     const fullName = `${friend.firstName} ${friend.lastName}`.toLowerCase();
     const username = friend.username.toLowerCase();
     const query = searchQuery.toLowerCase();
     const matchesSearch = fullName.includes(query) || username.includes(query);
-    
+
     if (statusFilter === "all") {
       return matchesSearch;
     } else {
@@ -208,21 +228,30 @@ export default function FriendsPage() {
               <Clock className="w-4 h-4 mr-2" />
               Pending
               {pendingRequests.length > 0 && (
-                <Badge className="ml-2 bg-red-500">{pendingRequests.length}</Badge>
+                <Badge className="ml-2 bg-red-500">
+                  {pendingRequests.length}
+                </Badge>
               )}
             </TabsTrigger>
           </TabsList>
 
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={() => {
-              fetchFriends();
-              fetchPendingRequests();
-            }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                fetchFriends();
+                fetchPendingRequests();
+              }}
+            >
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </Button>
 
-            <Dialog open={isAddFriendDialogOpen} onOpenChange={setIsAddFriendDialogOpen}>
+            <Dialog
+              open={isAddFriendDialogOpen}
+              onOpenChange={setIsAddFriendDialogOpen}
+            >
               <DialogTrigger asChild>
                 <Button size="sm">
                   <UserPlus className="w-4 h-4 mr-2" />
@@ -232,7 +261,10 @@ export default function FriendsPage() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Friend</DialogTitle>
-                  <DialogDescription>Enter the username of the person you want to add as a friend.</DialogDescription>
+                  <DialogDescription>
+                    Enter the username of the person you want to add as a
+                    friend.
+                  </DialogDescription>
                 </DialogHeader>
                 <Input
                   placeholder="Username"
@@ -240,8 +272,15 @@ export default function FriendsPage() {
                   onChange={(e) => setNewFriendUsername(e.target.value)}
                 />
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddFriendDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={handleSendFriendRequest}>Send Request</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddFriendDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSendFriendRequest}>
+                    Send Request
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -284,10 +323,10 @@ export default function FriendsPage() {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {filteredFriends.map(friend => (
-                    <FriendListItem 
-                      key={friend.id} 
-                      friend={friend} 
+                  {filteredFriends.map((friend) => (
+                    <FriendListItem
+                      key={friend.id}
+                      friend={friend}
                       onRemove={() => openRemoveDialog(friend.username)}
                     />
                   ))}
@@ -300,27 +339,48 @@ export default function FriendsPage() {
         <TabsContent value="pending">
           {pendingRequests.length === 0 ? (
             <div className="text-center py-10">
-              <h3 className="text-lg font-medium">No pending friend requests</h3>
-              <p className="text-gray-500 mt-2">When someone sends you a friend request, it will appear here.</p>
+              <h3 className="text-lg font-medium">
+                No pending friend requests
+              </h3>
+              <p className="text-gray-500 mt-2">
+                When someone sends you a friend request, it will appear here.
+              </p>
             </div>
           ) : (
             <div className="border rounded-md divide-y">
-              {pendingRequests.map(request => (
-                <div key={request.id} className="flex items-center justify-between p-4">
+              {pendingRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="flex items-center justify-between p-4"
+                >
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarFallback>{request.firstName?.[0]}{request.lastName?.[0]}</AvatarFallback>
+                      <AvatarFallback>
+                        {request.firstName?.[0]}
+                        {request.lastName?.[0]}
+                      </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{request.firstName} {request.lastName}</p>
-                      <p className="text-sm text-gray-500">@{request.username}</p>
+                      <p className="font-medium">
+                        {request.firstName} {request.lastName}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        @{request.username}
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleDeclineRequest(request.username)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeclineRequest(request.username)}
+                    >
                       <X className="w-4 h-4 mr-1" /> Decline
                     </Button>
-                    <Button size="sm" onClick={() => handleAcceptRequest(request.username)}>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAcceptRequest(request.username)}
+                    >
                       <Check className="w-4 h-4 mr-1" /> Accept
                     </Button>
                   </div>
@@ -336,12 +396,17 @@ export default function FriendsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Friend</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this friend? This action cannot be undone.
+              Are you sure you want to remove this friend? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setRemoveFriendUsername(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveFriend}>Remove</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setRemoveFriendUsername(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveFriend}>
+              Remove
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -350,29 +415,38 @@ export default function FriendsPage() {
 }
 
 function FriendListItem({ friend, onRemove }) {
-  const statusColor = {
-    'ONLINE': 'bg-green-500',
-    'OFFLINE': 'bg-gray-300',
-    'IN-BATTLE': 'bg-yellow-500',
-  }[friend.status] || 'bg-gray-300';
+  const statusColor =
+    {
+      ONLINE: "bg-green-500",
+      OFFLINE: "bg-gray-300",
+      "IN-BATTLE": "bg-yellow-500",
+    }[friend.status] || "bg-gray-300";
 
-  const statusText = {
-    'ONLINE': 'Online',
-    'OFFLINE': 'Offline',
-    'IN-BATTLE': 'In Battle',
-  }[friend.status] || 'Unknown';
+  const statusText =
+    {
+      ONLINE: "Online",
+      OFFLINE: "Offline",
+      "IN-BATTLE": "In Battle",
+    }[friend.status] || "Unknown";
 
   return (
     <div className="flex items-center justify-between p-4 hover:bg-neutral-900">
       <div className="flex items-center gap-3">
         <div className="relative">
           <Avatar>
-            <AvatarFallback>{friend.firstName?.[0]}{friend.lastName?.[0]}</AvatarFallback>
+            <AvatarFallback>
+              {friend.firstName?.[0]}
+              {friend.lastName?.[0]}
+            </AvatarFallback>
           </Avatar>
-          <span className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full ${statusColor} ring-2 ring-white`} />
+          <span
+            className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full ${statusColor} ring-2 ring-white`}
+          />
         </div>
         <div>
-          <p className="font-medium">{friend.firstName} {friend.lastName}</p>
+          <p className="font-medium">
+            {friend.firstName} {friend.lastName}
+          </p>
           <div className="flex items-center gap-2">
             <p className="text-sm text-gray-500">@{friend.username}</p>
             <span className="text-xs text-gray-400">• {statusText}</span>
