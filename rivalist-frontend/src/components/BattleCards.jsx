@@ -1,14 +1,25 @@
 // BattleCards.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Keyboard, Palette, Code } from "lucide-react";
 import { useAuth } from '@/utils/AuthContext';
+import { useModal } from '../utils/ModalContext';
 import FriendChallenge from './FriendChallenge';
 import LoginPopup from './LoginPage';
 
 export default function BattlePage() {
   const [selectedBattle, setSelectedBattle] = useState(null);
   const { user } = useAuth();
+  const { openModal, closeModal } = useModal();
+
+  // Control modal visibility through the context
+  useEffect(() => {
+    if (selectedBattle) {
+      openModal();
+    } else {
+      closeModal();
+    }
+  }, [selectedBattle, openModal, closeModal]);
 
   return (
     <div className="min-h-screen pt-40 pb-32 relative">
@@ -82,18 +93,27 @@ export default function BattlePage() {
 
       {/* Overlay System */}
       {selectedBattle && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
-          { user ? (
-            <FriendChallenge 
-              battleType={selectedBattle}
-              onClose={() => setSelectedBattle(null)}
-            />
-          ) : (
-            <LoginPopup 
-              onClose={() => setSelectedBattle(null)}
-              onLoginSuccess={() => setSelectedBattle(selectedBattle)}
-            />
-          )}
+        <div className="fixed inset-0 z-[999]">
+          {/* Dimmed background with blur - clicking outside closes popup */}
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-lg"
+            onClick={() => setSelectedBattle(null)}
+          />
+
+          {/* Centered modal */}
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            {user ? (
+              <FriendChallenge 
+                battleType={selectedBattle}
+                onClose={() => setSelectedBattle(null)}
+              />
+            ) : (
+              <LoginPopup 
+                onClose={() => setSelectedBattle(null)}
+                onLoginSuccess={() => setSelectedBattle(selectedBattle)}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
