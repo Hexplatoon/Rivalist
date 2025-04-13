@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
       });
       if (response.ok) {
         const userData = await response.json();
-        setUser(userData);
+        setUser(userData.username);
       } else {
         logout();
       }
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
     if (response.ok) {
       localStorage.setItem('token', data.token);
       setToken(data.token);
-      setUser(data.user);
+      setUser(data.username);
       return true;
     }
     throw new Error(data.message || 'Login failed');

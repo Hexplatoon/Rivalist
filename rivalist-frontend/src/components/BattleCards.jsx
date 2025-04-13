@@ -1,11 +1,17 @@
+// BattleCards.jsx
+import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Keyboard, Palette, Code } from "lucide-react";
+import { useAuth } from './AuthContext';
+import FriendChallenge from './FriendChallenge';
+import LoginPopup from './LoginPage';
 
 export default function BattlePage() {
-  return (
-    <div className="min-h-screen bg-black pt-40 pb-32">
-      
+  const [selectedBattle, setSelectedBattle] = useState(null);
+  const { user } = useAuth();
 
+  return (
+    <div className="min-h-screen bg-black pt-40 pb-32 relative">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto">
         {/* Typing Battle Card */}
         <Card className="group bg-gray-900 p-8 rounded-xl transition-all duration-500 hover:duration-300 min-h-[400px] flex flex-col 
@@ -19,8 +25,11 @@ export default function BattlePage() {
               Test your typing speed against other developers. Race against time
               and compete for the top spot in the leaderboard!
             </p>
-            <button className="mt-6 px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium text-lg transition-all
-                             group-hover:scale-105 group-hover:shadow-md group-hover:shadow-purple-500/50">
+            <button 
+              onClick={() => setSelectedBattle('typing')}
+              className="mt-6 px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium text-lg transition-all
+                         group-hover:scale-105 group-hover:shadow-md group-hover:shadow-purple-500/50"
+            >
               Start Typing
             </button>
           </div>
@@ -38,8 +47,11 @@ export default function BattlePage() {
               Show off your CSS skills! Replicate complex designs with minimal
               code and compete for the most efficient solutions.
             </p>
-            <button className="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium text-lg transition-all
-                             group-hover:scale-105 group-hover:shadow-md group-hover:shadow-blue-500/50">
+            <button 
+              onClick={() => setSelectedBattle('css')}
+              className="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium text-lg transition-all
+                         group-hover:scale-105 group-hover:shadow-md group-hover:shadow-blue-500/50"
+            >
               Start Styling
             </button>
           </div>
@@ -57,13 +69,33 @@ export default function BattlePage() {
               Solve algorithmic challenges head-to-head against other
               programmers. Speed and efficiency will decide the winner!
             </p>
-            <button className="mt-6 px-8 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-medium text-lg transition-all
-                             group-hover:scale-105 group-hover:shadow-md group-hover:shadow-green-500/50">
+            <button 
+              onClick={() => setSelectedBattle('coding')}
+              className="mt-6 px-8 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-medium text-lg transition-all
+                         group-hover:scale-105 group-hover:shadow-md group-hover:shadow-green-500/50"
+            >
               Start Coding
             </button>
           </div>
         </Card>
       </div>
+
+      {/* Overlay System */}
+      {selectedBattle && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
+          { user ? (
+            <FriendChallenge 
+              battleType={selectedBattle}
+              onClose={() => setSelectedBattle(null)}
+            />
+          ) : (
+            <LoginPopup 
+              onClose={() => setSelectedBattle(null)}
+              onLoginSuccess={() => setSelectedBattle(selectedBattle)}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
