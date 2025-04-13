@@ -13,6 +13,7 @@ import { useAuth } from "../utils/AuthContext";
 import SockJS from "sockjs-client";
 import * as Stomp from "stompjs";
 import { cn } from "@/lib/utils";
+import { useStomp } from "@/utils/StompContext";
 
 export default function NotificationPopup({
   children,
@@ -21,35 +22,86 @@ export default function NotificationPopup({
 }) {
   const [open, setOpen] = useState(false);
   const { user, token } = useAuth();
+  const { connected, subscribeWithCleanup } = useStomp();
 
   console.log("NotificationPopup Render:", { user, notifications, open });
 
   useEffect(() => {
-    console.log("WebSocket Effect - User Token:", token);
+    if (!connected) return;
 
-    if (!token) {
-      console.warn("No user token available - WebSocket connection aborted");
-      return;
-    }
+    // console.log("WebSocket Effect - User Token:", token);
 
-    const socket = new SockJS("http://localhost:8081/ws");
-    const stompClient = Stomp.over(socket);
+    // if (!token) {
+    //   console.warn("No user token available - WebSocket connection aborted");
+    //   return;
+    // }
 
-    console.log("Attempting WebSocket connection...");
+    // const socket = new SockJS("http://localhost:8081/ws");
+    // const stompClient = Stomp.over(socket);
 
-    stompClient.connect(
-      {
-        Authorization: `Bearer ${token}`,
-      },
-      (frame) => {
-        console.log("WebSocket Connected:", frame);
+    // console.log("Attempting WebSocket connection...");
 
-        const notificationSubscription = stompClient.subscribe(
-          "/user/topic/notifications",
-          (message) => {
-            console.log("Received Notification:", message.body);
+    // stompClient.connect(
+    //   {
+    //     Authorization: `Bearer ${token}`,
+    //   },
+    //   (frame) => {
+    //     console.log("WebSocket Connected:", frame);
+
+    //     const notificationSubscription = stompClient.subscribe(
+    //       "/user/topic/notifications",
+    //       (message) => {
+    //         console.log("Received Notification:", message.body);
+    //         try {
+    //           const data = JSON.parse(message.body);
+    //           console.log("Parsed Notification Data:", data.senderUsername);
+    //           addNotification({
+    //             id: data.id || Date.now().toString(),
+    //             type: data.type,
+    //             from: data.senderUsername,
+    //             challengeId: data.challengeId,
+    //             content: data.message,
+    //           });
+    //         } catch (error) {
+    //           console.error("Error processing notification:", error);
+    //         }
+    //       }
+    //     );
+
+    //     const challengeSubscription = stompClient.subscribe(
+    //       "/user/topic/challenge",
+    //       (message) => {
+    //         console.log("Received Challenge:", message.body);
+    //         try {
+    //           const data = JSON.parse(message.body);
+    //           console.log("Parsed Challenge Data:", data);
+    //           addNotification({
+    //             id: `challenge-${data.challengeId}`,
+    //             type: "challenge",
+    //             from: data.from,
+    //             challengeId: data.challengeId,
+    //             content: "You received a new challenge!",
+    //           });
+    //         } catch (error) {
+    //           console.error("Error processing challenge:", error);
+    //         }
+    //       }
+    //     );
+
+    //     console.log("Subscriptions Active:", {
+    //       notifications: notificationSubscription.id,
+    //       challenges: challengeSubscription.id,
+    //     });
+    //   },
+    //   (error) => {
+    //     console.error("WebSocket Connection Error:", error);
+    //   }
+    // );
+
+    const notifUnsub = subscribeWithCleanup("/user/topic/notifications", (msg)=>{
+      console.log("Received Notification:", msg.body);
             try {
-              const data = JSON.parse(message.body);
+              const data = JSON.parse(msg.body);
               console.log("Parsed Notification Data:", data.senderUsername);
               addNotification({
                 id: data.id || Date.now().toString(),
@@ -61,13 +113,10 @@ export default function NotificationPopup({
             } catch (error) {
               console.error("Error processing notification:", error);
             }
-          }
-        );
+    });
 
-        const challengeSubscription = stompClient.subscribe(
-          "/user/topic/challenge",
-          (message) => {
-            console.log("Received Challenge:", message.body);
+    const challengeUnsub = subscribeWithCleanup("user/topic/challenge", (msg)=>{
+      console.log("Received Challenge:", message.body);
             try {
               const data = JSON.parse(message.body);
               console.log("Parsed Challenge Data:", data);
@@ -81,26 +130,13 @@ export default function NotificationPopup({
             } catch (error) {
               console.error("Error processing challenge:", error);
             }
-          }
-        );
-
-        console.log("Subscriptions Active:", {
-          notifications: notificationSubscription.id,
-          challenges: challengeSubscription.id,
-        });
-      },
-      (error) => {
-        console.error("WebSocket Connection Error:", error);
-      }
-    );
+    });
 
     return () => {
-      if (stompClient?.connected) {
-        console.log("Disconnecting WebSocket...");
-        stompClient.disconnect();
-      }
+      notifUnsub();
+      challengeUnsub();
     };
-  }, [token]);
+  }, [connected]);
 
   const addNotification = (notification) => {
     console.log("Adding New Notification:", notification);

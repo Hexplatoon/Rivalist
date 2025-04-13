@@ -5,9 +5,10 @@ import LandingPage from "./pages/LandingPage";
 import Signup from "./components/SignUp";
 import { AuthProvider, useAuth } from "./utils/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { Toaster } from 'sonner';
+import { Toaster } from "sonner";
 import FriendsPage from "./pages/FriendsPage";
 import { ModalProvider } from "./utils/ModalContext";
+import { StompProvider } from "./utils/StompContext";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -28,7 +29,7 @@ function AppContent() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<Signup />} />
         <Route element={<ProtectedRoute />}>
-        <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/friends" element={<FriendsPage />} />
         </Route>
       </Routes>
     </>
@@ -38,9 +39,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <ModalProvider>
-      <AppContent />
-      </ModalProvider>
+      <StompProvider>
+        <ModalProvider>
+          <AppContent />
+        </ModalProvider>
+      </StompProvider>
     </AuthProvider>
   );
 }
