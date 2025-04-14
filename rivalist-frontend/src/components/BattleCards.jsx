@@ -36,7 +36,7 @@ export default function BattlePage() {
                 if (!user) {
                   setShowLogin(true);
                 } else {
-                  setSelectedBattle("typing");
+                  setSelectedBattle("TB");
                 }
               }}
               className="mt-6 px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium text-lg transition-all
@@ -64,7 +64,7 @@ export default function BattlePage() {
                 if (!user) {
                   setShowLogin(true);
                 } else {
-                  setSelectedBattle("css");
+                  setSelectedBattle("CSS");
                 }
               }}
               className="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium text-lg transition-all
@@ -92,7 +92,7 @@ export default function BattlePage() {
                 if (!user) {
                   setShowLogin(true);
                 } else {
-                  setSelectedBattle("coding");
+                  setSelectedBattle("CF");
                 }
               }}
               className="mt-6 px-8 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-medium text-lg transition-all

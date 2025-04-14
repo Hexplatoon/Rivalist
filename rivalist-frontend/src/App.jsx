@@ -9,6 +9,7 @@ import { Toaster } from "sonner";
 import FriendsPage from "./pages/FriendsPage";
 import { StompProvider } from "./utils/StompContext";
 import { LoginProvider } from "./utils/LoginContext";
+import BattleRoom from "./components/BattleRoom";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -31,6 +32,7 @@ function AppContent() {
         <Route element={<ProtectedRoute />}>
           <Route path="/friends" element={<FriendsPage />} />
         </Route>
+        <Route path="/test" element={<BattleRoom/>}/>
       </Routes>
     </>
   );

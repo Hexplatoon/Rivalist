@@ -10,37 +10,52 @@ import { useAuth } from '@/utils/AuthContext';
 export default function FriendChallenge({ battleType, onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFriend, setSelectedFriend] = useState(null);
-  const { friends } = useAuth();
-
-  const allFriends = [
-    {
-      id: 1,
-      name: "Alex Johnson",
-      avatar: "/api/placeholder/100/100",
-      status: "online",
-      game: "Playing Fortnite"
-    },
-    {
-      id: 2,
-      name: "Taylor Swift",
-      avatar: "/api/placeholder/100/100",
-      status: "online",
-      game: "Playing Minecraft"
-    },
-    {
-      id: 3,
-      name: "Jordan Lee",
-      avatar: "/api/placeholder/100/100",
-      status: "online",
-      game: null
-    }
-  ];
+  const [isLoading, setIsLoading] = useState(false);
+  const { token, friends } = useAuth();
+  
   console.log(friends);
 
   const onlineFriends = friends.filter(friend =>
     friend.status == "ONLINE" &&
     friend.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const sendChallengeRequest = async () => {
+    if (!selectedFriend) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('http://localhost:8081/api/challenges/create', {
+        method: 'POST',
+        headers: {
+          Authorization : `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: selectedFriend.username,
+          eventType: battleType
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send challenge request');
+      }
+      
+      // Handle successful response
+      const data = await response.json();
+      console.log('Challenge created:', data);
+      
+      // Close the modal after successful request
+      onClose();
+    } catch (error) {
+      console.error('Error sending challenge:', error);
+      // You could add error handling UI here
+    } finally {
+      setIsLoading(false);
+      setSelectedFriend(null);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center from-black/80 via-gray-900/80 to-gray-800/80 backdrop-blur-sm">
@@ -171,11 +186,17 @@ export default function FriendChallenge({ battleType, onClose }) {
               <Button
                 variant="default"
                 className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => {
-                  setSelectedFriend(null);
-                }}
+                disabled={isLoading}
+                onClick={sendChallengeRequest}
               >
-                Send Challenge
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Sending...
+                  </span>
+                ) : (
+                  "Send Challenge"
+                )}
               </Button>
             </div>
           </CardContent>
