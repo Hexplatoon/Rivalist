@@ -9,8 +9,9 @@ import { Toaster } from "sonner";
 import FriendsPage from "./pages/FriendsPage";
 import { StompProvider } from "./utils/StompContext";
 import { LoginProvider } from "./utils/LoginContext";
-import BattleRoom from "./components/BattleRoom";
-import TypingTest from "./components/TypingTest";
+import WaitingRoom from "./pages/WaitingRoom";
+import TypingTest from "./components/TypingBattle";
+import BattlePage from "./pages/BattlePage";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -32,9 +33,9 @@ function AppContent() {
         <Route path="/signup" element={<Signup />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/friends" element={<FriendsPage />} />
-          <Route path="/room" element={<BattleRoom/>}/>
+          <Route path="/room" element={<WaitingRoom/>}/>
+          <Route path="/battle" element={<BattlePage/>}/>
         </Route>
-        <Route path="/test" element={<TypingTest/>}/>
       </Routes>
     </>
   );

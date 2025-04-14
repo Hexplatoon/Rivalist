@@ -6,7 +6,7 @@ import { useAuth } from '@/utils/AuthContext';
 import FriendChallenge from './FriendChallenge';
 import { useLogin } from '@/utils/LoginContext';
 
-export default function BattlePage() {
+export default function BattleCards() {
   const [selectedBattle, setSelectedBattle] = useState(null);
   const { user, friends } = useAuth();
   const {setShowLogin} = useLogin();

@@ -25,7 +25,11 @@ export const StompProvider = ({ children }) => {
   const subscriptions = useRef([]);
   const reconnectTimeout = useRef(null);
 
-  const [battleData, setBattleData] = useState(null); // 👈 Battle message state
+  const [battleData, setBattleData] = useState(null);
+
+  const updateBattleData = (data) => {
+    setBattleData(data);
+  };
 
   const connect = () => {
     const socket = new SockJS("http://localhost:8081/ws");
@@ -138,7 +142,7 @@ export const StompProvider = ({ children }) => {
   }, [token]);
 
   return (
-    <BattleContext.Provider value={{ battleData }}>
+    <BattleContext.Provider value={{ battleData, updateBattleData }}>
       <StompContext.Provider value={{ connected, send, subscribe, subscribeWithCleanup }}>
         {children}
       </StompContext.Provider>

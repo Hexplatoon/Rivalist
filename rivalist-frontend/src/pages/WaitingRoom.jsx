@@ -16,12 +16,10 @@ import { useNavigate } from "react-router-dom";
 export default function BattleWaitingPage() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [isReady, setIsReady] = useState(false);
-  const [battleStarted, setBattleStarted] = useState(false);
   const { send, subscribeWithCleanup } = useStomp();
   const { token } = useAuth();
-  const [opponentResponded, setOpponentResponded] = useState(false);
   const [expired, setExpired] = useState(false);
-  const { battleData } = useBattle();
+  const { battleData, updateBattleData } = useBattle();
   const navigate = useNavigate();
 
   // Timer countdown (frontend-only, no timeout API calls)
@@ -33,13 +31,13 @@ export default function BattleWaitingPage() {
     } else {
       localStorage.setItem == id;
     }
-    if (timeLeft > 0 && !battleStarted) {
+    if (timeLeft > 0) {
       const timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [timeLeft, battleStarted]);
+  }, [timeLeft]);
 
   // Subscribe to battle start command
   useEffect(() => {
@@ -50,8 +48,11 @@ export default function BattleWaitingPage() {
       (message) => {
         const data = JSON.parse(message.body);
         console.log("data", data);
-
-        setBattleStarted(true);
+        battleData.config = data.config;
+        // console.log("battle data: ", battleData);
+        updateBattleData(battleData);
+        navigate("/battle");
+        // updateBattleData()
       }
     );
 
@@ -62,34 +63,29 @@ export default function BattleWaitingPage() {
     if (!isReady && battleData?.battleId) {
       // Convert to numeric value first
       const battleId = Number(battleData.battleId);
-
-      send(
-        "/app/battle/ready",
-        battleId // 👈 Must be a number, not object
-      );
-
+      send("/app/battle/ready", battleId);
       setIsReady(true);
     }
   };
 
-  if (battleStarted) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-        <Card className="w-full max-w-3xl">
-          <CardHeader className="text-center border-b">
-            <CardTitle className="text-2xl font-bold">
-              Battle Started!
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6 text-center">
-            <div className="text-4xl font-bold text-green-500 py-8">
-              The battle has begun! 🚀
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // if (battleStarted) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+  //       <Card className="w-full max-w-3xl">
+  //         <CardHeader className="text-center border-b">
+  //           <CardTitle className="text-2xl font-bold">
+  //             Battle Started!
+  //           </CardTitle>
+  //         </CardHeader>
+  //         <CardContent className="pt-6 text-center">
+  //           <div className="text-4xl font-bold text-green-500 py-8">
+  //             The battle has begun! 🚀
+  //           </div>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">

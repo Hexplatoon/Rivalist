@@ -2,15 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import Keyboard from './Keyboard';
+import { useBattle } from '@/utils/StompContext';
 
-const TypingTest = ({ duration = 60, onStart }) => {
-  const [text] = useState(
-    'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet and is commonly used for typing practice. Try to type it as accurately and quickly as possible without making mistakes. Good luck and enjoy your practice! The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet and is commonly used for typing practice. Try to type it as accurately and quickly as possible without making mistakes. Good luck and enjoy your practice!'
-  );
+const TypingBattle = () => {
+  const {battleData} = useBattle();
+  const [text] = useState(battleData.config.text);
+  const [duration] = useState(battleData.config.duration);
   const [input, setInput] = useState('');
   const [timeLeft, setTimeLeft] = useState(duration);
   const [pressedKey, setPressedKey] = useState('');
-  const [isRunning, setIsRunning] = useState(true);
   const [errors, setErrors] = useState([]);
   const inputRef = useRef(null);
   const textContainerRef = useRef(null);
@@ -148,4 +148,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-export default TypingTest;
+export default TypingBattle;
