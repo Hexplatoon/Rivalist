@@ -10,15 +10,24 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Timer, CheckCircle } from "lucide-react";
 import { useBattle } from "@/utils/StompContext";
+import { useNavigate } from "react-router-dom";
 
 export default function BattleWaitingPage() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [isReady, setIsReady] = useState(false);
   const [opponentResponded, setOpponentResponded] = useState(false);
   const [expired, setExpired] = useState(false);
-  const {battleData} = useBattle(); 
+  const {battleData} = useBattle();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    let id = localStorage.getItem("battleId");
+    if (!battleData?.battleId) console.log("No Battle Data");
+    if (!battleData?.battleId || battleData.battleId == id){
+      navigate("/");
+    }else{
+      localStorage.setItem == id;
+    }
     if (timeLeft > 0) {
       const timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);

@@ -112,6 +112,7 @@ export const StompProvider = ({ children }) => {
 
       if (body.message === "CREATED") {
         setBattleData(body);
+        localStorage.removeItem("battleId");
         navigate("/room");
       }
     });
