@@ -2,22 +2,36 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Timer } from "lucide-react";
 import { useBattle, useStomp } from "@/utils/StompContext";
 import { useAuth } from "@/utils/AuthContext";
+import { Timer } from "lucide-react";
+import { useBattle } from "@/utils/StompContext";
+import { useNavigate } from "react-router-dom";
 
 export default function BattleWaitingPage() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [isReady, setIsReady] = useState(false);
-  const [battleStarted, setBattleStarted] = useState(false);
-  const { battleData } = useBattle();
+  const [battleStarted, setBattleStarted] = useState(false);;
   const { send, subscribeWithCleanup } = useStomp();
   const {token} = useAuth()
+  const [opponentResponded, setOpponentResponded] = useState(false);
+  const [expired, setExpired] = useState(false);
+  const {battleData} = useBattle();
+  const navigate = useNavigate();
 
   // Timer countdown (frontend-only, no timeout API calls)
   useEffect(() => {
+    let id = localStorage.getItem("battleId");
+    if (!battleData?.battleId) console.log("No Battle Data");
+    if (!battleData?.battleId || battleData.battleId == id){
+      navigate("/");
+    }else{
+      localStorage.setItem == id;
+    }
     if (timeLeft > 0 && !battleStarted) {
-      const timer = setTimeout(() => setTimeLeft(t => t - 1), 1000);
+      const timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [timeLeft, battleStarted]);
