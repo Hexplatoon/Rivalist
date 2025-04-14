@@ -8,10 +8,7 @@ import com.hexplatoon.rivalist_backend.entity.Battle;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -56,7 +53,6 @@ public class TypingBattleHandlerService {
         String challengerUsername = battle.getChallenger().getUsername();
         String opponentUsername = battle.getOpponent().getUsername();
         Map<String, String> textMap = userTextMap.remove(battleId);
-        System.out.println("textMap: " + textMap);
         String challengerText = textMap.get(challengerUsername);
         String opponentText = textMap.get(opponentUsername);
         String originalText = ((TypingConfig)config).getText();
@@ -69,8 +65,10 @@ public class TypingBattleHandlerService {
         System.out.println("challengerUsername : " + challengerUsername);
         System.out.println("opponentUsername : " + opponentUsername);
 
-        double challengerWPM = calculateWPM(challengerText, durationInSeconds);
-        double opponentWPM = calculateWPM(opponentText, durationInSeconds);
+        List<Double> challengerStats = calculateStats(challengerText, originalText, durationInSeconds);
+        List<Double> opponentStats = calculateStats(opponentText, originalText, durationInSeconds);
+        double challengerWPM = challengerStats.get(0);
+        double opponentWPM = opponentStats.get(0);
         System.out.println("challengerWPM : " + challengerWPM);
         System.out.println("opponentWPM : " + opponentWPM);
         String winnerUsername, loserUsername;
@@ -101,29 +99,28 @@ public class TypingBattleHandlerService {
         return (words.length / (durationInSeconds / 60.0));
     }
 
-//    public TypingStats calculateWpmAndAccuracy(String userTypedText, String originalText, int durationInSeconds) {
-//        if (durationInSeconds == 0 || userTypedText == null || originalText == null) {
-//            return new TypingStats(0, 0);
-//        }
-//
-//        int correctChars = 0;
-//        int totalChars = Math.min(userTypedText.length(), originalText.length());
-//
-//        for (int i = 0; i < totalChars; i++) {
-//            if (userTypedText.charAt(i) == originalText.charAt(i)) {
-//                correctChars++;
-//            }
-//        }
-//
-//        double accuracy = (originalText.length() == 0) ? 0 :
-//                ((double) correctChars / originalText.length()) * 100;
-//
-//        int totalWordsTyped = userTypedText.trim().isEmpty() ? 0 : userTypedText.trim().split("\\s+").length;
-//        double minutes = durationInSeconds / 60.0;
-//        double wpm = minutes > 0 ? totalWordsTyped / minutes : 0;
-//
-//        return new TypingStats(accuracy, wpm);
-//    }
+    public static List<Double> calculateStats(String typedText, String originalText, int durationInSeconds) {
+        String[] typedWords = typedText.trim().split("\\s+");
+        String[] originalWords = originalText.trim().split("\\s+");
+
+        int correctWords = 0;
+        int totalWords = Math.min(typedWords.length, originalWords.length);
+
+        for (int i = 0; i < totalWords; i++) {
+            if (typedWords[i].equals(originalWords[i])) {
+                correctWords++;
+            }
+        }
+
+        // WPM calculation
+        double minutes = durationInSeconds / 60.0;
+        double wpm = typedWords.length / minutes;
+
+        // Accuracy calculation
+        double accuracy = (typedWords.length == 0) ? 0 : (100.0 * correctWords / typedWords.length);
+
+        return Arrays.asList(wpm, accuracy);
+    }
 
 
     public String getRandomText(int sentenceCount){
