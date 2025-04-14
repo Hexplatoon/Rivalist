@@ -9,12 +9,14 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Timer, CheckCircle } from "lucide-react";
+import { useBattle } from "@/utils/StompContext";
 
 export default function BattleWaitingPage() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [isReady, setIsReady] = useState(false);
   const [opponentResponded, setOpponentResponded] = useState(false);
   const [expired, setExpired] = useState(false);
+  const {battleData} = useBattle(); 
 
   useEffect(() => {
     if (timeLeft > 0) {

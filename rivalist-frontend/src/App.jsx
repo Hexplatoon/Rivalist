@@ -31,8 +31,8 @@ function AppContent() {
         <Route path="/signup" element={<Signup />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/room" element={<BattleRoom/>}/>
         </Route>
-        <Route path="/test" element={<BattleRoom/>}/>
       </Routes>
     </>
   );

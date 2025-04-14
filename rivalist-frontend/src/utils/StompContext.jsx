@@ -8,23 +8,29 @@ import React, {
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
 import { useAuth } from "./AuthContext";
+import { useNavigate } from "react-router-dom";
+
+// Create Battle Context
+const BattleContext = createContext(null);
+export const useBattle = () => useContext(BattleContext);
 
 const StompContext = createContext(null);
 export const useStomp = () => useContext(StompContext);
 
 export const StompProvider = ({ children }) => {
   const { user, token } = useAuth();
+  const navigate = useNavigate();
   const stompClientRef = useRef(null);
   const [connected, setConnected] = useState(false);
   const subscriptions = useRef([]);
   const reconnectTimeout = useRef(null);
 
-  const connect = () => {
-    const socket = new SockJS("http://localhost:8081/ws"); // 🧠 Your WebSocket endpoint
-    const stompClient = Stomp.over(socket);
+  const [battleData, setBattleData] = useState(null); // 👈 Battle message state
 
-    stompClient.reconnectDelay = 0; // We handle reconnection manually
-    // stompClient.debug = () => {}; // Silence logs; comment this out for debugging
+  const connect = () => {
+    const socket = new SockJS("http://localhost:8081/ws");
+    const stompClient = Stomp.over(socket);
+    stompClient.reconnectDelay = 0;
 
     stompClient.connect(
       { Authorization: `Bearer ${token}` },
@@ -59,7 +65,6 @@ export const StompProvider = ({ children }) => {
   const subscribe = (destination, callback) => {
     const subEntry = { destination, callback };
 
-    // Prevent duplicate subscriptions
     if (
       !subscriptions.current.some(
         (s) => s.destination === destination && s.callback === callback
@@ -72,7 +77,7 @@ export const StompProvider = ({ children }) => {
       return stompClientRef.current.subscribe(destination, callback);
     }
 
-    return null; // Not connected yet
+    return null;
   };
 
   const send = (destination, body) => {
@@ -85,11 +90,10 @@ export const StompProvider = ({ children }) => {
 
   const subscribeWithCleanup = (destination, callback) => {
     const subscription = subscribe(destination, callback);
-  
+
     return () => {
       if (subscription) {
         subscription.unsubscribe();
-        // Remove from local subscriptions tracking
         subscriptions.current = subscriptions.current.filter(
           (s) => s.destination !== destination || s.callback !== callback
         );
@@ -97,6 +101,25 @@ export const StompProvider = ({ children }) => {
       }
     };
   };
+
+  // 👇 Custom subscription logic
+  useEffect(() => {
+    if (!connected) return;
+
+    const unsubscribe = subscribeWithCleanup("/user/topic/battle/create", (message) => {
+      const body = JSON.parse(message.body);
+      console.log("📩 Received battle message:", body);
+
+      if (body.message === "CREATED") {
+        setBattleData(body);
+        navigate("/room");
+      }
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [connected]);
 
   useEffect(() => {
     if (!token) return;
@@ -114,8 +137,10 @@ export const StompProvider = ({ children }) => {
   }, [token]);
 
   return (
-    <StompContext.Provider value={{ connected, send, subscribe, subscribeWithCleanup }}>
-      {children}
-    </StompContext.Provider>
+    <BattleContext.Provider value={{ battleData }}>
+      <StompContext.Provider value={{ connected, send, subscribe, subscribeWithCleanup }}>
+        {children}
+      </StompContext.Provider>
+    </BattleContext.Provider>
   );
 };
