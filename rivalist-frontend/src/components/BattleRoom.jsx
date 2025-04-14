@@ -5,7 +5,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useBattle, useStomp } from "@/utils/StompContext";
 import { useAuth } from "@/utils/AuthContext";
 import { Timer } from "lucide-react";
-import { useBattle } from "@/utils/StompContext";
 import { useNavigate } from "react-router-dom";
 
 export default function BattleWaitingPage() {
