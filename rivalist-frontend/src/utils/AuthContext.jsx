@@ -124,6 +124,7 @@ export function AuthProvider({ children }) {
       token, 
       loading, 
       friends,
+      setFriends,
       pendingRequests,
       fetchFriends,
       fetchPendingRequests,

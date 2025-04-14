@@ -27,7 +27,7 @@ export default function LoginPopup({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-70 flex items-center justify-center from-black/80 via-gray-900/80 to-gray-800/80 backdrop-blur-xl">
-      <Card className="relative w-full max-w-md bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white border border-gray-800">
+      <Card className="relative w-full max-w-md from-gray-900 via-black to-gray-900 text-white border border-gray-800">
         <Button
           variant="ghost"
           size="icon"

@@ -100,7 +100,7 @@ export default function BattlePage() {
         <div className="fixed inset-0 z-[999]">
           {/* Dimmed background with blur - clicking outside closes popup */}
           <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-lg"
+            className="absolute inset-0 bg-black/30 backdrop-blur-lg"
             onClick={() => setSelectedBattle(null)}
           />
 
