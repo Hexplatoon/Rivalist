@@ -3,23 +3,14 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Keyboard, Palette, Code } from "lucide-react";
 import { useAuth } from '@/utils/AuthContext';
-import { useModal } from '../utils/ModalContext';
 import FriendChallenge from './FriendChallenge';
-import LoginPopup from './LoginPage';
+import { useLogin } from '@/utils/LoginContext';
 
 export default function BattlePage() {
   const [selectedBattle, setSelectedBattle] = useState(null);
   const { user, friends } = useAuth();
-  const { openModal, closeModal } = useModal();
+  const {setShowLogin} = useLogin();
 
-  // Control modal visibility through the context
-  useEffect(() => {
-    if (selectedBattle) {
-      openModal();
-    } else {
-      closeModal();
-    }
-  }, [selectedBattle, openModal, closeModal]);
 
   if (user) {
     console.log(friends)
@@ -41,7 +32,13 @@ export default function BattlePage() {
               and compete for the top spot in the leaderboard!
             </p>
             <button
-              onClick={() => setSelectedBattle('typing')}
+              onClick={() => {
+                if (!user) {
+                  setShowLogin(true);
+                } else {
+                  setSelectedBattle("typing");
+                }
+              }}
               className="mt-6 px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium text-lg transition-all
                          group-hover:scale-105 group-hover:shadow-md group-hover:shadow-purple-500/50"
             >
@@ -63,7 +60,13 @@ export default function BattlePage() {
               code and compete for the most efficient solutions.
             </p>
             <button
-              onClick={() => setSelectedBattle('css')}
+              onClick={() =>{
+                if (!user) {
+                  setShowLogin(true);
+                } else {
+                  setSelectedBattle("css");
+                }
+              }}
               className="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium text-lg transition-all
                          group-hover:scale-105 group-hover:shadow-md group-hover:shadow-blue-500/50"
             >
@@ -85,7 +88,13 @@ export default function BattlePage() {
               programmers. Speed and efficiency will decide the winner!
             </p>
             <button
-              onClick={() => setSelectedBattle('coding')}
+              onClick={() => {
+                if (!user) {
+                  setShowLogin(true);
+                } else {
+                  setSelectedBattle("coding");
+                }
+              }}
               className="mt-6 px-8 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-medium text-lg transition-all
                          group-hover:scale-105 group-hover:shadow-md group-hover:shadow-green-500/50"
             >
@@ -95,7 +104,6 @@ export default function BattlePage() {
         </Card>
       </div>
 
-      {/* Overlay System */}
       {selectedBattle && (
         <div className="fixed inset-0 z-[999]">
           {/* Dimmed background with blur - clicking outside closes popup */}
@@ -106,17 +114,10 @@ export default function BattlePage() {
 
           {/* Centered modal */}
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            {user ? (
               <FriendChallenge
                 battleType={selectedBattle}
                 onClose={() => setSelectedBattle(null)}
               />
-            ) : (
-              <LoginPopup
-                onClose={() => setSelectedBattle(null)}
-                onLoginSuccess={() => setSelectedBattle(selectedBattle)}
-              />
-            )}
           </div>
         </div>
       )}

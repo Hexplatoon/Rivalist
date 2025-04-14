@@ -4,18 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Bell, UserCircle, Users, LogOut } from "lucide-react";
 import { useAuth } from "../utils/AuthContext";
 import { useState } from "react";
-import { useModal } from "../utils/ModalContext";
 import LoginPage from "./LoginPage";
 import SignUP from "./SignUP";
 import NotificationPopup from "./NotificationPopup";
 import Logo from "@/assets/logo.png"
+import { useLogin } from "@/utils/LoginContext";
 
 export default function Navbar() {
-  const [showLogin, setShowLogin] = useState(false);
+  // const [showLogin, setShowLogin] = useState(false);
+  const {showLogin, setShowLogin} = useLogin();
   const [showSignup, setShowSignup] = useState(false); 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { isModalOpen } = useModal();
 
   const handlefriendOnclick = (e) =>{
     e.preventDefault();
@@ -25,8 +25,6 @@ export default function Navbar() {
   // Initialize with empty notifications array
   const [notifications, setNotifications] = useState([]);
 
-  // Don't render the navbar if any modal is open
-  if (isModalOpen) return null;
 
   return (
     <>
@@ -110,6 +108,7 @@ export default function Navbar() {
             onClick={() => setShowLogin(false)}
           />
           <div className="relative flex items-center justify-center h-full w-full p-4">
+            {console.log(showLogin)}
             <LoginPage onClose={() => setShowLogin(false)} />
           </div>
         </div>

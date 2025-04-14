@@ -7,8 +7,8 @@ import { AuthProvider, useAuth } from "./utils/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Toaster } from "sonner";
 import FriendsPage from "./pages/FriendsPage";
-import { ModalProvider } from "./utils/ModalContext";
 import { StompProvider } from "./utils/StompContext";
+import { LoginProvider } from "./utils/LoginContext";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -40,9 +40,9 @@ function App() {
   return (
     <AuthProvider>
       <StompProvider>
-        <ModalProvider>
+        <LoginProvider>
           <AppContent />
-        </ModalProvider>
+        </LoginProvider>
       </StompProvider>
     </AuthProvider>
   );
