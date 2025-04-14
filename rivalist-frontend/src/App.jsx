@@ -10,6 +10,7 @@ import FriendsPage from "./pages/FriendsPage";
 import { StompProvider } from "./utils/StompContext";
 import { LoginProvider } from "./utils/LoginContext";
 import BattleRoom from "./components/BattleRoom";
+import TypingTest from "./components/TypingTest";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -33,6 +34,7 @@ function AppContent() {
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/room" element={<BattleRoom/>}/>
         </Route>
+        <Route path="/test" element={<TypingTest/>}/>
       </Routes>
     </>
   );
