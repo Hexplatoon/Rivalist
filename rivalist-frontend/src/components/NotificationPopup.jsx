@@ -98,38 +98,38 @@ export default function NotificationPopup({
     //   }
     // );
 
-    const notifUnsub = subscribeWithCleanup("/user/topic/notifications", (msg)=>{
+    const notifUnsub = subscribeWithCleanup("/user/topic/notifications", (msg) => {
       console.log("Received Notification:", msg.body);
-            try {
-              const data = JSON.parse(msg.body);
-              console.log("Parsed Notification Data:", data.senderUsername);
-              addNotification({
-                id: data.id || Date.now().toString(),
-                type: data.type,
-                from: data.senderUsername,
-                challengeId: data.challengeId,
-                content: data.message,
-              });
-            } catch (error) {
-              console.error("Error processing notification:", error);
-            }
+      try {
+        const data = JSON.parse(msg.body);
+        console.log("Parsed Notification Data:", data.senderUsername);
+        addNotification({
+          id: data.id || Date.now().toString(),
+          type: data.type,
+          from: data.senderUsername,
+          challengeId: data.challengeId,
+          content: data.message,
+        });
+      } catch (error) {
+        console.error("Error processing notification:", error);
+      }
     });
 
-    const challengeUnsub = subscribeWithCleanup("user/topic/challenge", (msg)=>{
+    const challengeUnsub = subscribeWithCleanup("/user/topic/challenge", (message) => {
       console.log("Received Challenge:", message.body);
-            try {
-              const data = JSON.parse(message.body);
-              console.log("Parsed Challenge Data:", data);
-              addNotification({
-                id: `challenge-${data.challengeId}`,
-                type: "challenge",
-                from: data.from,
-                challengeId: data.challengeId,
-                content: "You received a new challenge!",
-              });
-            } catch (error) {
-              console.error("Error processing challenge:", error);
-            }
+      try {
+        const data = JSON.parse(message.body);
+        console.log("Parsed Challenge Data:", data);
+        addNotification({
+          id: `challenge-${data.challengeId}`,
+          type: "challenge",
+          from: data.senderUsername,
+          challengeId: data.challengeId,
+          content: "You received a new challenge!",
+        });
+      } catch (error) {
+        console.error("Error processing challenge:", error);
+      }
     });
 
     return () => {
@@ -173,7 +173,7 @@ export default function NotificationPopup({
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${user.token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -216,7 +216,7 @@ export default function NotificationPopup({
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${user.token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
