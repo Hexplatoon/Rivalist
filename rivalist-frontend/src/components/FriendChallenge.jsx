@@ -142,7 +142,7 @@ export default function FriendChallenge({ battleType, onClose }) {
           </CardContent>
         </Card>
       ) : (
-        <Card className="relative w-full max-w-sm bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white border border-gray-800">
+        <Card className="relative w-full max-w-sm from-gray-900 via-black to-gray-900 text-white border border-gray-800">
           <Button
             variant="ghost"
             size="icon"

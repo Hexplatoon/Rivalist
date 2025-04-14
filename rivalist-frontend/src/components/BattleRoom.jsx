@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useBattle, useStomp } from "@/utils/StompContext";
 import { useAuth } from "@/utils/AuthContext";
@@ -10,21 +16,21 @@ import { useNavigate } from "react-router-dom";
 export default function BattleWaitingPage() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [isReady, setIsReady] = useState(false);
-  const [battleStarted, setBattleStarted] = useState(false);;
+  const [battleStarted, setBattleStarted] = useState(false);
   const { send, subscribeWithCleanup } = useStomp();
-  const {token} = useAuth()
+  const { token } = useAuth();
   const [opponentResponded, setOpponentResponded] = useState(false);
   const [expired, setExpired] = useState(false);
-  const {battleData} = useBattle();
+  const { battleData } = useBattle();
   const navigate = useNavigate();
 
   // Timer countdown (frontend-only, no timeout API calls)
   useEffect(() => {
     let id = localStorage.getItem("battleId");
     if (!battleData?.battleId) console.log("No Battle Data");
-    if (!battleData?.battleId || battleData.battleId == id){
+    if (!battleData?.battleId || battleData.battleId == id) {
       navigate("/");
-    }else{
+    } else {
       localStorage.setItem == id;
     }
     if (timeLeft > 0 && !battleStarted) {
@@ -39,12 +45,15 @@ export default function BattleWaitingPage() {
   useEffect(() => {
     if (!token) return;
 
-    const cleanup = subscribeWithCleanup("/user/topic/battle/start", (message) => {
-      const data = JSON.parse(message.body);
-      console.log("data",data);
-      
-      setBattleStarted(true);
-    });
+    const cleanup = subscribeWithCleanup(
+      "/user/topic/battle/start",
+      (message) => {
+        const data = JSON.parse(message.body);
+        console.log("data", data);
+
+        setBattleStarted(true);
+      }
+    );
 
     return cleanup;
   }, [token]);
@@ -53,12 +62,12 @@ export default function BattleWaitingPage() {
     if (!isReady && battleData?.battleId) {
       // Convert to numeric value first
       const battleId = Number(battleData.battleId);
-      
-      
+
       send(
-        "/app/battle/ready", battleId // 👈 Must be a number, not object
+        "/app/battle/ready",
+        battleId // 👈 Must be a number, not object
       );
-      
+
       setIsReady(true);
     }
   };
@@ -68,7 +77,9 @@ export default function BattleWaitingPage() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <Card className="w-full max-w-3xl">
           <CardHeader className="text-center border-b">
-            <CardTitle className="text-2xl font-bold">Battle Started!</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Battle Started!
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 text-center">
             <div className="text-4xl font-bold text-green-500 py-8">
@@ -84,7 +95,9 @@ export default function BattleWaitingPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-3xl">
         <CardHeader className="text-center border-b">
-          <CardTitle className="text-2xl font-bold">Battle Waiting Room</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            Battle Waiting Room
+          </CardTitle>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Timer size={18} />
             <span>{timeLeft} seconds remaining</span>
@@ -110,7 +123,10 @@ export default function BattleWaitingPage() {
             {/* Opponent - No status tracking */}
             <div className="flex flex-col items-center gap-3">
               <Avatar className="w-32 h-32 border-2 border-destructive">
-                <AvatarImage src="/api/placeholder/400/400" alt="Opponent avatar" />
+                <AvatarImage
+                  src="/api/placeholder/400/400"
+                  alt="Opponent avatar"
+                />
                 <AvatarFallback className="text-xl">OPP</AvatarFallback>
               </Avatar>
               <div className="text-center">
@@ -130,23 +146,27 @@ export default function BattleWaitingPage() {
           <div className="relative w-2/3">
             {!isReady && timeLeft > 0 && (
               <div className="absolute inset-0 rounded-md overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-primary/20"
-                  style={{ 
+                  style={{
                     width: `${(timeLeft / 30) * 100}%`,
-                    transition: 'width 1s linear'
+                    transition: "width 1s linear",
                   }}
                 />
               </div>
             )}
-            
-            <Button 
-              className="w-full h-12 text-lg font-medium relative z-10"
-              variant={isReady ? "secondary" : "default"}
+
+            <Button
+              className={`w-full h-12 text-lg font-medium relative z-10 ${
+                isReady
+                  ? "bg-green-400 hover:bg-green-700"
+                  : "bg-muted/80 hover:bg-muted"
+              }`}
+              variant={isReady ? "default" : "secondary"}
               onClick={handleReady}
-              disabled={isReady || timeLeft <= 0}
+              disabled={isReady || expired}
             >
-              {isReady ? 'READY!' : 'I\'M READY'}
+              {isReady ? "READY!" : "I'M READY"}
             </Button>
           </div>
         </CardFooter>
