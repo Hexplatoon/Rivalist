@@ -38,6 +38,7 @@ function AppContent() {
           <Route path="/battle" element={<BattlePage/>}/>
           <Route path="/battleresult" element={<BattleResults/>}/>
         </Route>
+        <Route path="/test" element={<BattleResults/>}/>
       </Routes>
     </>
   );

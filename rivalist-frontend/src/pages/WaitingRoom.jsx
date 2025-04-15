@@ -11,7 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useBattle, useStomp } from "@/utils/StompContext";
 import { useAuth } from "@/utils/AuthContext";
 import { Timer } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { replace, useNavigate } from "react-router-dom";
 
 export default function BattleWaitingPage() {
   const [timeLeft, setTimeLeft] = useState(30);
@@ -21,16 +21,20 @@ export default function BattleWaitingPage() {
   const [expired, setExpired] = useState(false);
   const { battleData, updateBattleData } = useBattle();
   const navigate = useNavigate();
+  let id = localStorage.getItem("battleId");
+
+  // check to prevent access if exited from battle or
+  // access through url or browser page navigation
+  useEffect(()=>{
+    if (!battleData?.battleId || battleData.battleId == id) {
+      navigate("/", {replace : true});
+    } else {
+      localStorage.setItem("battleId", battleData.battleId);
+    }
+  }, [])
 
   // Timer countdown (frontend-only, no timeout API calls)
   useEffect(() => {
-    let id = localStorage.getItem("battleId");
-    if (!battleData?.battleId) console.log("No Battle Data");
-    if (!battleData?.battleId || battleData.battleId == id) {
-      navigate("/");
-    } else {
-      localStorage.setItem == id;
-    }
     if (timeLeft > 0) {
       const timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);
@@ -42,7 +46,7 @@ export default function BattleWaitingPage() {
   // Subscribe to battle start command
   useEffect(() => {
     if (!token) return;
-
+    localStorage.removeItem("battleId");
     const cleanup = subscribeWithCleanup(
       "/user/topic/battle/start",
       (message) => {
@@ -52,7 +56,6 @@ export default function BattleWaitingPage() {
         // console.log("battle data: ", battleData);
         updateBattleData(battleData);
         navigate("/battle");
-        // updateBattleData()
       }
     );
 
@@ -68,24 +71,10 @@ export default function BattleWaitingPage() {
     }
   };
 
-  // if (battleStarted) {
-  //   return (
-  //     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-  //       <Card className="w-full max-w-3xl">
-  //         <CardHeader className="text-center border-b">
-  //           <CardTitle className="text-2xl font-bold">
-  //             Battle Started!
-  //           </CardTitle>
-  //         </CardHeader>
-  //         <CardContent className="pt-6 text-center">
-  //           <div className="text-4xl font-bold text-green-500 py-8">
-  //             The battle has begun! 🚀
-  //           </div>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   );
-  // }
+  // don't render if the battle already happened
+  if (!battleData?.battleId || battleData.battleId == id) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">

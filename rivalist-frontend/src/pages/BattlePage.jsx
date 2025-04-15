@@ -10,8 +10,8 @@ const BattlePage = () => {
   const { token } = useAuth();
   const { subscribeWithCleanup } = useStomp()
   const navigate = useNavigate()
-  console.log("Battle data in battle page: ", battleData);
-
+  let id = localStorage.getItem("battleId");
+  
   useEffect(() => {
     if (!token) return;
 
@@ -24,14 +24,25 @@ const BattlePage = () => {
 
         updateBattleData(battleData);
         navigate("/battleresult");
-        // updateBattleData()
       }
     );
 
     return cleanup;
   }, [token]);
+ 
+  // access through url or browser page navigation
+  useEffect(()=>{
+    if (!battleData?.battleId || battleData.battleId == id) {
+      navigate("/", {replace : true});
+    } else {
+      localStorage.setItem("battleId", battleData.battleId);
+    }
+  }, [])
 
-  if (!battleData) return <div>Loading battle...</div>;
+  // don't render if the battle already happened
+  if (!battleData?.battleId || battleData.battleId == id) {
+    return null;
+  }
 
   switch (battleData.category) {
     case 'TB':
