@@ -2,7 +2,7 @@ import TypingBattle from '@/components/TypingBattle';
 import { useBattle } from '@/utils/StompContext';
 
 const BattlePage = () => {
-  const { battleData } = useBattle();
+  const { battleData, updateBattleData} = useBattle();
   console.log("Battle data in battle page: ", battleData);
 
   if (!battleData) return <div>Loading battle...</div>;
