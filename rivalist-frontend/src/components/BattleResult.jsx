@@ -4,17 +4,40 @@ import { Button } from '@/components/ui/button';
 import { Trophy, Star, Home } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
+import { useBattle } from '@/utils/StompContext';
+import { useAuth } from '@/utils/AuthContext';
 
 const BattleResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const opponent = location.state?.opponent || { username: 'Unknown Opponent' };
-  const user = location.state?.user || { username: 'You' };
-  const userWon = location.state?.userWon || true;
-  const userScore = location.state?.userScore || 0;
-  const opponentScore = location.state?.opponentScore || 0;
-  const timeSpent = location.state?.timeSpent || 0;
+  const { battleData } = useBattle()
+  const { user } = useAuth();
+
+
+  // const opponent = location.state?.opponent || { username: 'Unknown Opponent' };
+  // const user = location.state?.user || { username: 'You' };
+  // const userWon = location.state?.userWon || true;
+  // const userScore = location.state?.userScore || 0;
+  // const opponentScore = location.state?.opponentScore || 0;
+  // const timeSpent = location.state?.timeSpent || 0;
+
+  const opponent = battleData.challenger.username === user
+    ? battleData.opponent.username
+    : battleData.challenger.username;
+
+  const userWon = battleData.result.winnerUsername === user;
+
+  const userScore = userWon
+    ? battleData.result.winnerScore
+    : battleData.result.loserScore;
+
+  const opponentScore = userWon
+    ? battleData.result.loserScore
+    : battleData.result.winnerScore;
+
+  const timeSpent = battleData.config.duration;
+  // const opponent = battleData
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -75,13 +98,13 @@ const BattleResults = () => {
       >
         <div className="flex justify-between items-center">
           <div className="text-center flex-1">
-            <p className="text-sm text-muted-foreground mb-1">{user.username || 'You'}</p>
-            <p className="text-3xl font-bold">{userScore}%</p>
+            <p className="text-sm text-muted-foreground mb-1">{user || 'You'}</p>
+            <p className="text-3xl font-bold">{userScore}</p>
           </div>
           <div className="text-center font-bold text-xl">vs</div>
           <div className="text-center flex-1">
-            <p className="text-sm text-muted-foreground mb-1">{opponent.username}</p>
-            <p className="text-3xl font-bold">{opponentScore}%</p>
+            <p className="text-sm text-muted-foreground mb-1">{opponent}</p>
+            <p className="text-3xl font-bold">{opponentScore}</p>
           </div>
         </div>
 
