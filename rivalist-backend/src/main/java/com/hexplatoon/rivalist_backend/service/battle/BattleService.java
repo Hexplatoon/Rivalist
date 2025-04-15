@@ -46,6 +46,7 @@ public class BattleService{
     private final ObjectMapper objectMapper;
 
 
+
     @Autowired
     public BattleService(
             UserRepository userRepository,
@@ -175,6 +176,11 @@ public class BattleService{
         System.out.println("Battle ended");
 
         // TODO : save result in db
+        try {
+            battle.setResultJson(objectMapper.writeValueAsString(result));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error serializing result", e);
+        }
 
         //TODO: BattleResultWebsocketDto ✅
         BattleResultWebsocketDto dto = BattleResultWebsocketDto.builder()

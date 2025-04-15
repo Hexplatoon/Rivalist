@@ -12,6 +12,7 @@ import { LoginProvider } from "./utils/LoginContext";
 import WaitingRoom from "./pages/WaitingRoom";
 import TypingTest from "./components/TypingBattle";
 import BattlePage from "./pages/BattlePage";
+import BattleResults from "./components/BattleResult";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -36,6 +37,7 @@ function AppContent() {
           <Route path="/room" element={<WaitingRoom/>}/>
           <Route path="/battle" element={<BattlePage/>}/>
         </Route>
+        <Route path="/test" element={<BattleResults/>}/>
       </Routes>
     </>
   );
