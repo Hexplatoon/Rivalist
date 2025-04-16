@@ -26,7 +26,7 @@ public class TypingBattleHandlerService {
 
     public Config getConfig(Long battleId) {
 
-        String text = getRandomText(20);
+        String text = getRandomText(150);
         Integer duration = battleService.getActiveBattleById(battleId).getDuration();
 
         Config config = TypingConfig.builder()
@@ -58,17 +58,8 @@ public class TypingBattleHandlerService {
         String originalText = ((TypingConfig)config).getText();
         Integer durationInSeconds = ((TypingConfig)config).getDuration();
 
-//        System.out.println("challengerText : " + challengerText);
-//        System.out.println("opponentText : " + opponentText);
-//        System.out.println("original text : " + originalText);
-//        System.out.println("durationInSeconds : " + durationInSeconds);
-//        System.out.println("challengerUsername : " + challengerUsername);
-//        System.out.println("opponentUsername : " + opponentUsername);
-
         double challengerWPM = calculateWPM(challengerText, originalText, durationInSeconds);
         double opponentWPM = calculateWPM(opponentText, originalText, durationInSeconds);
-        System.out.println("challengerWPM : " + challengerWPM);
-        System.out.println("opponentWPM : " + opponentWPM);
         String winnerUsername, loserUsername;
         double winnerScore, loserScore;
 
@@ -87,15 +78,10 @@ public class TypingBattleHandlerService {
         return Result.builder()
                 .winnerUsername(winnerUsername)
                 .loserUsername(loserUsername)
-                .winnerScore(winnerScore)
-                .loserScore(loserScore)
+                .winnerScore((int)winnerScore + " WPM")
+                .loserScore((int)loserScore + " WPM")
                 .build();
     }
-
-//    private double calculateWPM(String typedText, int durationInSeconds) {
-//        String[] words = typedText.trim().split("\\s+");
-//        return (words.length / (durationInSeconds / 60.0));
-//    }
 
     private double calculateWPM(String typedText, String originalText, int durationInSeconds) {
         String[] typedWords = typedText.trim().split("\\s+");
@@ -110,16 +96,18 @@ public class TypingBattleHandlerService {
             }
         }
 
+        System.out.println("correctWords: " + correctWords);
+
         // WPM calculation
         double minutes = durationInSeconds / 60.0;
         return correctWords / minutes;
     }
 
 
-    public String getRandomText(int sentenceCount) {
-        List<String> output = new ArrayList<>();
+    public String getRandomText(int minWordCount) {
+        List<String> words = new ArrayList<>();
 
-        for (int i = 0; i < sentenceCount; i++) {
+        while (words.size() < minWordCount) {
             String sentence;
             switch (random.nextInt(15)) {
                 case 0 -> sentence = faker.hitchhikersGuideToTheGalaxy().quote();
@@ -139,12 +127,21 @@ public class TypingBattleHandlerService {
                 case 14 -> sentence = faker.superhero().name() + " can " + faker.superhero().power();
                 default -> sentence = faker.educator().course();
             }
-            sentence = sentence.replaceAll("[.,!?':\"’;+π/0123456789%=–…‘—#()-]", "");
-            output.add(sentence.toLowerCase());
+
+            // Clean and split the sentence into words
+            String[] rawWords = sentence.replaceAll("[.,!?':\"’;+π/0123456789%=–…‘—#()\\-]", "")
+                    .toLowerCase()
+                    .split("\\s+");
+
+            // Filter and add words <= 7 characters
+            for (String word : rawWords) {
+                if (word.length() <= 7) {
+                    words.add(word);
+                    if (words.size() >= minWordCount) break;
+                }
+            }
         }
 
-        String text = String.join(" ", output).replaceAll("\\s+", " ").trim();
-        return text;
+        return String.join(" ", words).trim();
     }
-
 }

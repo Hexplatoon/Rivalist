@@ -67,13 +67,20 @@ public class BattleService{
         User challenger = findUserByUsername(challengerUsername);
         User opponent = findUserByUsername(opponentUsername);
 
+        // TODO : This duration will be fetched from the challenge
+        int duration = 0;
+        if (eventType == Challenge.EventType.TB) duration = 30;
+        else if (eventType == Challenge.EventType.CSS) duration = 1200;
+        else if (eventType == Challenge.EventType.CF) duration = 3600;
+
+
         Battle battle = Battle.builder()
                 .category(Battle.Category.valueOf(eventType.name()))
                 .createdAt(LocalDateTime.now())
                 .challenger(challenger)
                 .opponent(opponent)
                 .status(Battle.Status.WAITING)
-                .duration(30) // TODO : duration will come from create battle endpoint
+                .duration(duration)
                 .build();
 
         battleRepository.save(battle);
@@ -109,6 +116,7 @@ public class BattleService{
         BattleSession session = BattleSession.builder().build();
         activeSessions.put(battle.getId(), session);
 
+        // update user status in db
         User challenger = battle.getChallenger();
         User opponent = battle.getOpponent();
         challenger.setStatus(User.UserStatus.IN_BATTLE);
@@ -125,7 +133,10 @@ public class BattleService{
             battle.setConfigJson(objectMapper.writeValueAsString(config));
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializing config", e);
+        } catch (AssertionError e) {
+            throw new RuntimeException("No battle running with id " + battleId, e);
         }
+
         //When both are ready
         BattleStartWebsocketDto dto = BattleStartWebsocketDto.builder()
                 .battleId(battle.getId())
@@ -133,15 +144,12 @@ public class BattleService{
                 .category(battle.getCategory())
                 .build();
 
+        // send data to users with websocket
         simpMessagingTemplate.convertAndSendToUser(challenger.getUsername(),"/topic/battle/start", dto);
         simpMessagingTemplate.convertAndSendToUser(opponent.getUsername(),"/topic/battle/start", dto);
-        // Battle config fetch logic
-        // send data to users with websocket
 
         battle.setStatus(Battle.Status.ONGOING);
-        activeBattles.get(battle.getId()).setStatus(Battle.Status.ONGOING);
         battle.setStartedAt(LocalDateTime.now());
-        activeBattles.get(battle.getId()).setStartedAt(LocalDateTime.now());
         battleRepository.save(battle);
 
         // Start timer
@@ -166,6 +174,7 @@ public class BattleService{
         opponent.setStatus(User.UserStatus.ONLINE);
         userRepository.save(opponent);
 
+        // result config fetch logic
         Result result = null;
         if (battle.getCategory() == Battle.Category.TB){
             result = typingBattleHandlerService.getResult(battleId);
@@ -173,21 +182,21 @@ public class BattleService{
         if (result == null) {
             throw new RuntimeException("Error fetching result");
         }
-        System.out.println("Battle ended");
 
-        // TODO : save result in db
+        // save result in db
         try {
             battle.setResultJson(objectMapper.writeValueAsString(result));
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializing result", e);
         }
 
-        //TODO: BattleResultWebsocketDto ✅
+        // BattleResultWebsocketDto
         BattleResultWebsocketDto dto = BattleResultWebsocketDto.builder()
                 .result(result)
                 .battleId(battle.getId())
                 .category(battle.getCategory())
                 .build();
+        // send to both the users
         simpMessagingTemplate.convertAndSendToUser(opponent.getUsername(),"/topic/battle/end", dto);
         simpMessagingTemplate.convertAndSendToUser(challenger.getUsername(),"/topic/battle/end", dto);
 
@@ -198,11 +207,10 @@ public class BattleService{
         BattleSession session = activeSessions.remove(battleId);
         Battle removedBattle = activeBattles.remove(battleId);
 
-        System.out.println("removed Battle: " + removedBattle);
-
         if (removedBattle != null && session != null) {
             battleRepository.save(removedBattle);
-            System.out.println("Battle " + battleId + " ended and saved.\n" + result.getWinnerUsername() + " won the battle.");
+        }else{
+            throw new RuntimeException("Error delete active session or battle");
         }
     }
 

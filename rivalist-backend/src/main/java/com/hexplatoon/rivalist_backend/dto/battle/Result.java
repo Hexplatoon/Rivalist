@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class Result {
     private String winnerUsername;
     private String loserUsername;
-    private Double winnerScore;
-    private Double loserScore;
+    private String winnerScore;
+    private String loserScore;
 }

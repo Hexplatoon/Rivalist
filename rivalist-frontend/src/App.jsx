@@ -13,6 +13,7 @@ import WaitingRoom from "./pages/WaitingRoom";
 import TypingTest from "./components/TypingBattle";
 import BattlePage from "./pages/BattlePage";
 import BattleResults from "./components/BattleResult";
+import CSSBattleClone from "./components/CSSBattleClone";
 
 function AppContent() {
   const { loading } = useAuth();
@@ -38,7 +39,7 @@ function AppContent() {
           <Route path="/battle" element={<BattlePage/>}/>
           <Route path="/battleresult" element={<BattleResults/>}/>
         </Route>
-        <Route path="/test" element={<BattleResults/>}/>
+        <Route path="/test" element={<CSSBattleClone/>}/>
       </Routes>
     </>
   );

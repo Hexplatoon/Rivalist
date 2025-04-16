@@ -1,39 +1,43 @@
-//package com.hexplatoon.rivalist_backend.mapper;
-//
-//import com.hexplatoon.rivalist_backend.dto.battle.BattleHistoryDto;
-//import com.hexplatoon.rivalist_backend.entity.Battle;
-//
-//public class BattleMapper {
-//
-//    public static BattleHistoryDto toDTO(Battle battle) {
-//        if (battle == null) return null;
-//
-//        return BattleHistoryDto.builder()
-//                .id(battle.getId())
-//                .category(battle.getCategory().name())
-//                .player1Id(battle.getPlayer1Id())
-//                .player2Id(battle.getPlayer2Id())
-//                .status(battle.getStatus().name())
-//                .createdAt(battle.getCreatedAt())
-//                .updatedAt(battle.getUpdatedAt())
-//                .resultJson(battle.getResultJson())
-//                .configJson(battle.getConfigJson())
-//                .build();
-//    }
-//
-//    public static Battle toEntity(BattleHistoryDto dto) {
-//        if (dto == null) return null;
-//
-//        return Battle.builder()
-//                .id(dto.getId())
-//                .category(Battle.Category.valueOf(dto.getCategory()))
-//                .player1Id(dto.getPlayer1Id())
-//                .player2Id(dto.getPlayer2Id())
-//                .status(Battle.Status.valueOf(dto.getStatus()))
-//                .createdAt(dto.getCreatedAt()) // Optional: usually handled automatically
-//                .updatedAt(dto.getUpdatedAt()) // Optional: usually handled automatically
-//                .resultJson(dto.getResultJson())
-////                .winnerId(dto.getWinnerId())
-//                .build();
-//    }
-//}
+package com.hexplatoon.rivalist_backend.mapper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hexplatoon.rivalist_backend.dto.battle.BattleHistoryDto;
+import com.hexplatoon.rivalist_backend.dto.battle.Result;
+import com.hexplatoon.rivalist_backend.dto.battle.config.CodeforcesConfig;
+import com.hexplatoon.rivalist_backend.dto.battle.config.Config;
+import com.hexplatoon.rivalist_backend.dto.battle.config.CssConfig;
+import com.hexplatoon.rivalist_backend.dto.battle.config.TypingConfig;
+import com.hexplatoon.rivalist_backend.entity.Battle;
+
+// TODO : Move this mapper to global mapper
+public class BattleMapper {
+
+    public static BattleHistoryDto toBattleHistoryDto(Battle battle) {
+        if (battle == null) return null;
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            Config obj = null;
+            if (battle.getCategory() == Battle.Category.TB) obj = mapper.readValue(battle.getConfigJson(), TypingConfig.class);
+            else if (battle.getCategory() == Battle.Category.CSS) obj = mapper.readValue(battle.getConfigJson(), CssConfig.class);
+            else if (battle.getCategory() == Battle.Category.CF) obj = mapper.readValue(battle.getConfigJson(), CodeforcesConfig.class);
+
+            assert obj instanceof TypingConfig;
+            return BattleHistoryDto.builder()
+                    .id(battle.getId())
+                    .category(battle.getCategory().name())
+                    .challenger(ProfileMapper.toMiniProfileDto(battle.getChallenger()))
+                    .opponent(ProfileMapper.toMiniProfileDto(battle.getOpponent()))
+                    .status(battle.getStatus().name())
+                    .createdAt(battle.getCreatedAt())
+                    .startedAt(battle.getStartedAt())
+                    .updatedAt(battle.getUpdatedAt())
+                    .resultJson(mapper.readValue(battle.getResultJson(), Result.class))
+                    .configJson(obj)
+                    .build();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
