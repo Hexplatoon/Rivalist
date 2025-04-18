@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +44,7 @@ public class BattleService{
     private final BattleRepository battleRepository;
     private final BattleTimerService battleTimerService;
     private final TypingBattleHandlerService typingBattleHandlerService;
+    private final CssBattleHandlerService cssBattleHandlerService;
     private final ObjectMapper objectMapper;
 
 
@@ -53,12 +55,13 @@ public class BattleService{
             SimpMessagingTemplate simpMessagingTemplate,
             BattleRepository battleRepository,
             BattleTimerService battleTimerService,
-            TypingBattleHandlerService typingBattleHandlerService, ObjectMapper objectMapper) {
+            TypingBattleHandlerService typingBattleHandlerService, CssBattleHandlerService cssBattleHandlerService, ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.simpMessagingTemplate = simpMessagingTemplate;
         this.battleRepository = battleRepository;
         this.battleTimerService = battleTimerService;
         this.typingBattleHandlerService = typingBattleHandlerService;
+        this.cssBattleHandlerService = cssBattleHandlerService;
         this.objectMapper = objectMapper;
     }
 
@@ -128,6 +131,8 @@ public class BattleService{
         Config config = null;
         if (battle.getCategory() == Battle.Category.TB){
             config = typingBattleHandlerService.getConfig(battleId);
+        }else if(battle.getCategory() == Battle.Category.CSS){
+            config = cssBattleHandlerService.getConfig(battleId);
         }
         try {
             battle.setConfigJson(objectMapper.writeValueAsString(config));
@@ -178,6 +183,12 @@ public class BattleService{
         Result result = null;
         if (battle.getCategory() == Battle.Category.TB){
             result = typingBattleHandlerService.getResult(battleId);
+        }else if(battle.getCategory() == Battle.Category.CSS){
+            try {
+                result = cssBattleHandlerService.getResult(battleId);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
         if (result == null) {
             throw new RuntimeException("Error fetching result");

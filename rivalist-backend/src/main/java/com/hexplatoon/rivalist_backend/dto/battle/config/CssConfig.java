@@ -10,5 +10,8 @@ import lombok.NoArgsConstructor;
 //@AllArgsConstructor
 @Builder
 public class CssConfig implements Config {
-
+    private String imageUrl;
+    private Integer duration;
+    private String color1;
+    private String color2;
 }
