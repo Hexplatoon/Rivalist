@@ -61,6 +61,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints that don't require authentication
                 .requestMatchers("/api/auth/**", "/api/public/**", "/ws/**").permitAll()
+                // for admin routes
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             );

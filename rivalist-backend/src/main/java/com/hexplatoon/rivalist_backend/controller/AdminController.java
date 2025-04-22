@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/image")
+@RequestMapping("/admin")
 @RequiredArgsConstructor
-public class ImageController {
+public class AdminController {
 
     private final ImageService imageService;
 
-    @PostMapping
+    @PostMapping("/image/add")
     public ResponseEntity<?> saveImage(@RequestBody Image image) {
         imageService.save(image);
         return ResponseEntity.ok(Map.of("message", "Image Saved"));
